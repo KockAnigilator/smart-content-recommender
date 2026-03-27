@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "Yfuc9EzcOiw=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\user\\Documents\\GitHub\\smart-content-recommender\\src\\SmartContentRecommender.WebAPI\\SmartContentRecommender.WebAPI.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\user\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.3\\microsoft.aspnetcore.openapi.10.0.3.nupkg.sha512",
+    "C:\\Users\\user\\.nuget\\packages\\microsoft.openapi\\2.0.0\\microsoft.openapi.2.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,56 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "SmartContentRecommender.Infrastructure/1.0.0": {
+        "dependencies": {
+          "SmartContentRecommender.Application": "1.0.0",
+          "SmartContentRecommender.Domain": "1.0.0"
+        },
+        "runtime": {
+          "SmartContentRecommender.Infrastructure.dll": {}
+        }
+      },
+      "SmartContentRecommender.Application/1.0.0": {
+        "dependencies": {
+          "SmartContentRecommender.Domain": "1.0.0"
+        },
+        "runtime": {
+          "SmartContentRecommender.Application.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "SmartContentRecommender.Domain/1.0.0": {
+        "runtime": {
+          "SmartContentRecommender.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SmartContentRecommender.Infrastructure/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SmartContentRecommender.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SmartContentRecommender.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
