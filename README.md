@@ -86,6 +86,9 @@ Bearer <token>
 
 Подробные архитектурные диаграммы:
 - `docs/architecture.md`
+- Сценарий демонстрации: `docs/demo-scenario-ru.md`
+- Пошаговая памятка использования: `docs/user-guide-ru.md`
+- Скрипт запуска демо: `scripts/run-demo.ps1`
 
 ## Логическое микросервисное разделение (демо)
 
