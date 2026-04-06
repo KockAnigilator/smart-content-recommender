@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SmartContentRecommender.Application.Auth.Interfaces;
+using SmartContentRecommender.Application.UserActions.Interfaces;
 using SmartContentRecommender.Infrastructure.Auth;
 using SmartContentRecommender.Infrastructure.Persistence;
+using SmartContentRecommender.Infrastructure.UserActions;
 
 namespace SmartContentRecommender.Infrastructure;
 
@@ -24,6 +26,7 @@ public static class DependencyInjection
         services.Configure<JwtOptions>(options =>
             configuration.GetSection(JwtOptions.SectionName).Bind(options));
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserActionService, UserActionService>();
 
         return services;
     }
