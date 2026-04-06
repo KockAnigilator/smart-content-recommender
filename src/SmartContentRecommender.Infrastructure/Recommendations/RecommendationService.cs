@@ -38,7 +38,9 @@ public class RecommendationService : IRecommendationService
             .Select(g => new
             {
                 CategoryId = g.Key,
-                Score = g.Sum(x => GetActionWeight(x.action.Type))
+                Score = g.Sum(x =>
+                    x.action.Type == UserActionType.Like ? 3 :
+                    x.action.Type == UserActionType.Click ? 2 : 1)
             })
             .OrderByDescending(x => x.Score)
             .Take(5)
@@ -91,7 +93,9 @@ public class RecommendationService : IRecommendationService
             .Select(g => new
             {
                 ContentId = g.Key,
-                Score = g.Sum(x => GetActionWeight(x.Type))
+                Score = g.Sum(x =>
+                    x.Type == UserActionType.Like ? 3 :
+                    x.Type == UserActionType.Click ? 2 : 1)
             })
             .OrderByDescending(x => x.Score)
             .Take(safeLimit)
@@ -245,7 +249,9 @@ public class RecommendationService : IRecommendationService
             .Select(g => new
             {
                 ContentId = g.Key,
-                Weight = g.Sum(x => GetActionWeight(x.Type))
+                Weight = g.Sum(x =>
+                    x.Type == UserActionType.Like ? 3 :
+                    x.Type == UserActionType.Click ? 2 : 1)
             })
             .ToDictionaryAsync(x => x.ContentId, x => (double)x.Weight, cancellationToken);
     }

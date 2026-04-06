@@ -18,9 +18,12 @@ public class ApiClient
     {
         _httpClient = new HttpClient
         {
-            BaseAddress = new Uri(baseUrl)
+            BaseAddress = new Uri(baseUrl),
+            Timeout = TimeSpan.FromSeconds(10)
         };
     }
+
+    public string BaseUrl => _httpClient.BaseAddress?.ToString() ?? string.Empty;
 
     public void SetToken(string? token)
     {
@@ -110,6 +113,19 @@ public class ApiClient
     {
         var response = await _httpClient.DeleteAsync($"/api/admin/users/{userId}");
         return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> IsApiAvailableAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("/api/content");
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
 
