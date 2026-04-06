@@ -68,6 +68,11 @@ public class AuthService : IAuthService
             return AuthResult.Fail("Неверный Email или пароль.");
         }
 
+        if (user.IsBlocked)
+        {
+            return AuthResult.Fail("Пользователь заблокирован администратором.");
+        }
+
         var verifyResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (verifyResult == PasswordVerificationResult.Failed)
         {

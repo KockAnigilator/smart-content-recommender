@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SmartContentRecommender.Application.Admin.Interfaces;
 using SmartContentRecommender.Application.Auth.Interfaces;
 using SmartContentRecommender.Application.Content.Interfaces;
 using SmartContentRecommender.Application.Recommendations.Interfaces;
 using SmartContentRecommender.Application.UserActions.Interfaces;
+using SmartContentRecommender.Infrastructure.Admin;
 using SmartContentRecommender.Infrastructure.Auth;
 using SmartContentRecommender.Infrastructure.Content;
 using SmartContentRecommender.Infrastructure.Persistence;
@@ -29,6 +31,7 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString));
         services.Configure<JwtOptions>(options =>
             configuration.GetSection(JwtOptions.SectionName).Bind(options));
+        services.AddScoped<IUserAdminService, UserAdminService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IContentService, ContentService>();
         services.AddScoped<ICategoryService, CategoryService>();
