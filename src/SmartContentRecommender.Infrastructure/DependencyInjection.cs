@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SmartContentRecommender.Application.Auth.Interfaces;
+using SmartContentRecommender.Infrastructure.Auth;
 using SmartContentRecommender.Infrastructure.Persistence;
 
 namespace SmartContentRecommender.Infrastructure;
@@ -19,6 +21,9 @@ public static class DependencyInjection
 
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(connectionString));
+        services.Configure<JwtOptions>(options =>
+            configuration.GetSection(JwtOptions.SectionName).Bind(options));
+        services.AddScoped<IAuthService, AuthService>();
 
         return services;
     }
