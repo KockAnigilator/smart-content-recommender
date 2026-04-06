@@ -16,7 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Tag> Tags => Set<Tag>();
-    public DbSet<Content> Contents => Set<Content>();
+    public DbSet<Domain.Entities.Content> Contents => Set<Domain.Entities.Content>();
     public DbSet<ContentTag> ContentTags => Set<ContentTag>();
     public DbSet<UserAction> UserActions => Set<UserAction>();
 
@@ -60,7 +60,7 @@ public class ApplicationDbContext : DbContext
         });
 
         // --- contents ---
-        modelBuilder.Entity<Content>(entity =>
+        modelBuilder.Entity<Domain.Entities.Content>(entity =>
         {
             entity.ToTable("contents");
             entity.HasKey(c => c.Id);
