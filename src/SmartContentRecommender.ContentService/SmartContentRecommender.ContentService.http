@@ -1,0 +1,6 @@
+@SmartContentRecommender.ContentService_HostAddress = http://localhost:5025
+
+GET {{SmartContentRecommender.ContentService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
