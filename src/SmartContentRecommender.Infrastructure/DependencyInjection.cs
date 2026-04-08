@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<IUserActionService, UserActionService>();
         services.AddScoped<IRecommendationService, RecommendationService>();
+        services.AddScoped<IRecommendationMetricsService, RecommendationMetricsService>();
 
         return services;
     }

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -19,6 +20,10 @@ public class AuthService : IAuthService
     private readonly JwtOptions _jwtOptions;
     private readonly PasswordHasher<User> _passwordHasher = new();
 
+    private static readonly ConcurrentDictionary<string, (int FailCount, DateTimeOffset LastFail)> LoginFails = new();
+    private const int MaxFails = 5;
+    private static readonly TimeSpan FailWindow = TimeSpan.FromMinutes(5);
+
     public AuthService(ApplicationDbContext dbContext, IOptions<JwtOptions> jwtOptions)
     {
         _dbContext = dbContext;
@@ -31,6 +36,11 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(request.Password))
         {
             return AuthResult.Fail("Email и пароль обязательны.");
+        }
+
+        if (!IsPasswordStrong(request.Password))
+        {
+            return AuthResult.Fail("Пароль должен быть не короче 8 символов и содержать цифру, заглавную букву и спецсимвол.");
         }
 
         var userExists = await _dbContext.Users.AnyAsync(u => u.Email == email, cancellationToken);
@@ -62,9 +72,15 @@ public class AuthService : IAuthService
             return AuthResult.Fail("Email и пароль обязательны.");
         }
 
+        if (IsLockedOut(email))
+        {
+            return AuthResult.Fail("Слишком много неудачных попыток входа. Попробуйте позже.");
+        }
+
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         if (user is null)
         {
+            RegisterFail(email);
             return AuthResult.Fail("Неверный Email или пароль.");
         }
 
@@ -76,8 +92,11 @@ public class AuthService : IAuthService
         var verifyResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.Password);
         if (verifyResult == PasswordVerificationResult.Failed)
         {
+            RegisterFail(email);
             return AuthResult.Fail("Неверный Email или пароль.");
         }
+
+        ResetFail(email);
 
         var response = BuildTokenResponse(user);
         return AuthResult.Success(response, "Авторизация выполнена успешно.");
@@ -117,6 +136,48 @@ public class AuthService : IAuthService
             Token = tokenString,
             ExpiresAtUtc = expiresAtUtc
         };
+    }
+
+    private static bool IsPasswordStrong(string password)
+    {
+        if (password.Length < 8)
+        {
+            return false;
+        }
+
+        var hasDigit = password.Any(char.IsDigit);
+        var hasUpper = password.Any(char.IsUpper);
+        var hasSpecial = password.Any(ch => "!@#$%^&*".Contains(ch));
+
+        return hasDigit && hasUpper && hasSpecial;
+    }
+
+    private static bool IsLockedOut(string email)
+    {
+        if (!LoginFails.TryGetValue(email, out var info))
+        {
+            return false;
+        }
+
+        if (DateTimeOffset.UtcNow - info.LastFail > FailWindow)
+        {
+            return false;
+        }
+
+        return info.FailCount >= MaxFails;
+    }
+
+    private static void RegisterFail(string email)
+    {
+        LoginFails.AddOrUpdate(
+            email,
+            _ => (1, DateTimeOffset.UtcNow),
+            (_, old) => (old.FailCount + 1, DateTimeOffset.UtcNow));
+    }
+
+    private static void ResetFail(string email)
+    {
+        LoginFails.TryRemove(email, out _);
     }
 }
 
