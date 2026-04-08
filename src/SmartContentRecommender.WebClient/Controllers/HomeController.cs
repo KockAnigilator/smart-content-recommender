@@ -32,6 +32,7 @@ public class HomeController : Controller
         var token = _tokenStore.GetToken();
         model.IsAuthenticated = !string.IsNullOrWhiteSpace(token);
         model.Role = _tokenStore.GetRole() ?? "Guest";
+        model.ShowDemoHistoryButton = model.IsAuthenticated && await _api.IsDevModeAsync(cancellationToken);
 
         try
         {
@@ -138,6 +139,23 @@ public class HomeController : Controller
             TempData["Error"] = "Не удалось сохранить действие.";
         }
 
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GenerateDemoHistory(CancellationToken cancellationToken)
+    {
+        var token = _tokenStore.GetToken();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            TempData["Error"] = "Нужно войти, чтобы сгенерировать демо-историю.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var ok = await _api.GenerateDemoHistoryAsync(cancellationToken);
+        TempData[ok ? "Info" : "Error"] = ok
+            ? "Демо-история сгенерирована. Обновите профиль/рекомендации."
+            : "Не удалось сгенерировать демо-историю.";
         return RedirectToAction(nameof(Index));
     }
 

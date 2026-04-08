@@ -119,6 +119,9 @@
                                         <Button Content="KNN" Command="{Binding LoadKnnCommand}" />
                                         <Button Content="Explain KNN" Command="{Binding LoadExplainCommand}" />
                                         <Button Content="Профиль интересов" Command="{Binding LoadInterestProfileCommand}" />
+                                        <Button Content="Сгенерировать демо-историю (Dev)"
+                                                Visibility="{Binding ShowDemoHistoryButton, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                Command="{Binding GenerateDemoHistoryCommand}" />
                                     </StackPanel>
                                     <DataGrid ItemsSource="{Binding RecommendationItems}" AutoGenerateColumns="False" IsReadOnly="True">
                                         <DataGrid.Columns>

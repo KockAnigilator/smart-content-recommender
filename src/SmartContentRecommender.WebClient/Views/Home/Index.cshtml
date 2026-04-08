@@ -202,6 +202,14 @@ else
         <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
             <h4 class="mb-3">Персональный профиль интересов</h4>
 
+            @if (Model.ShowDemoHistoryButton)
+            {
+                <form method="post" asp-controller="Home" asp-action="GenerateDemoHistory" class="mb-3">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-sm btn-outline-primary" type="submit">Сгенерировать демо-историю (Dev)</button>
+                </form>
+            }
+
             @if (Model.InterestProfile is null)
             {
                 <div class="alert alert-secondary">Пока не удалось построить профиль интересов.</div>

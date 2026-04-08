@@ -374,6 +374,27 @@ public class ScrApiClient
         }
     }
 
+    public async Task<bool> IsDevModeAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("/api/dev/status", cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> GenerateDemoHistoryAsync(CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/dev/generate-demo-history");
+        AddAuthHeader(request);
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        return response.IsSuccessStatusCode;
+    }
+
     private async Task<AuthApiResponse> ReadAuthResponseAsync(
         HttpResponseMessage response,
         string fallbackMessage,

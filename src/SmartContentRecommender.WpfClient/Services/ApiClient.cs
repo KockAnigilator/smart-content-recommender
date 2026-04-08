@@ -247,5 +247,24 @@ public class ApiClient
             return false;
         }
     }
+
+    public async Task<bool> IsDevModeAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("/api/dev/status");
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public async Task<bool> GenerateDemoHistoryAsync()
+    {
+        var response = await _httpClient.PostAsync("/api/dev/generate-demo-history", null);
+        return response.IsSuccessStatusCode;
+    }
 }
 

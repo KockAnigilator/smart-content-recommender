@@ -9,6 +9,7 @@ public class HomeIndexViewModel
     public string? Info { get; set; }
 
     public bool ApiOnline { get; set; }
+    public bool ShowDemoHistoryButton { get; set; }
 
     public List<ContentItem> Contents { get; set; } = [];
     public List<RecommendationItem> Popular { get; set; } = [];

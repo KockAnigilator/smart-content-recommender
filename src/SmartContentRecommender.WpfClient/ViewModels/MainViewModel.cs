@@ -30,6 +30,7 @@ public class MainViewModel : ObservableObject
     private string _contentUrl = string.Empty;
     private string _contentDescription = string.Empty;
     private string _contentTagIdsCsv = string.Empty;
+    private bool _showDemoHistoryButton;
 
     public MainViewModel()
     {
@@ -62,6 +63,7 @@ public class MainViewModel : ObservableObject
         UpdateContentCommand = new RelayCommand(async () => await UpdateContentAsync(), () => IsAdmin && SelectedCategory is not null && SelectedContent is not null && !IsBusy);
         DeleteContentCommand = new RelayCommand(async () => await DeleteContentAsync(), () => IsAdmin && SelectedContent is not null && !IsBusy);
         LoadDbViewerCommand = new RelayCommand(async () => await LoadDbViewerAsync(), () => IsAdmin && !IsBusy);
+        GenerateDemoHistoryCommand = new RelayCommand(async () => await GenerateDemoHistoryAsync(), () => IsAuthorized && ShowDemoHistoryButton && !IsBusy);
         CheckApiCommand = new RelayCommand(async () => await UpdateApiStatusAsync(), () => !IsBusy);
 
         _ = UpdateApiStatusAsync();
@@ -235,6 +237,18 @@ public class MainViewModel : ObservableObject
         set => SetProperty(ref _contentTagIdsCsv, value);
     }
 
+    public bool ShowDemoHistoryButton
+    {
+        get => _showDemoHistoryButton;
+        set
+        {
+            if (SetProperty(ref _showDemoHistoryButton, value))
+            {
+                RaiseCanExecuteChanged();
+            }
+        }
+    }
+
     public RelayCommand RegisterCommand { get; }
     public RelayCommand LoginCommand { get; }
     public RelayCommand LogoutCommand { get; }
@@ -261,6 +275,7 @@ public class MainViewModel : ObservableObject
     public RelayCommand UpdateContentCommand { get; }
     public RelayCommand DeleteContentCommand { get; }
     public RelayCommand LoadDbViewerCommand { get; }
+    public RelayCommand GenerateDemoHistoryCommand { get; }
     public RelayCommand CheckApiCommand { get; }
 
     public bool IsAdmin => CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase);
@@ -315,6 +330,21 @@ public class MainViewModel : ObservableObject
             }
 
             await UpdateApiStatusAsync();
+        });
+    }
+
+    private async Task GenerateDemoHistoryAsync()
+    {
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var ok = await _apiClient.GenerateDemoHistoryAsync();
+            Status = ok ? "Демо-история сгенерирована." : "Не удалось сгенерировать демо-историю.";
+            if (ok)
+            {
+                await LoadInterestProfileAsync();
+                await LoadExplainAsync();
+                await LoadKnnAsync();
+            }
         });
     }
 
@@ -631,10 +661,12 @@ public class MainViewModel : ObservableObject
             IsApiOnline = true;
             ApiStatusText = $"API online ({_apiClient.BaseUrl.TrimEnd('/')})";
             ApiStatusBrush = Brushes.ForestGreen;
+            ShowDemoHistoryButton = IsAuthorized && await _apiClient.IsDevModeAsync();
         }
         else
         {
             SetApiOffline();
+            ShowDemoHistoryButton = false;
         }
     }
 
@@ -678,6 +710,7 @@ public class MainViewModel : ObservableObject
         UpdateContentCommand.RaiseCanExecuteChanged();
         DeleteContentCommand.RaiseCanExecuteChanged();
         LoadDbViewerCommand.RaiseCanExecuteChanged();
+        GenerateDemoHistoryCommand.RaiseCanExecuteChanged();
         CheckApiCommand.RaiseCanExecuteChanged();
     }
 
