@@ -18,6 +18,7 @@
 - `src/SmartContentRecommender.Application` — контракты сервисов и DTO
 - `src/SmartContentRecommender.Infrastructure` — EF Core, сервисы, JWT, seed
 - `src/SmartContentRecommender.WebAPI` — контроллеры, аутентификация, Swagger
+- `src/SmartContentRecommender.WebClient` — веб-версия (MVC + Razor), UI для пользовательских действий
 - `src/SmartContentRecommender.WpfClient` — WPF клиент (MVVM)
 
 ## Быстрый запуск API
@@ -54,6 +55,20 @@ dotnet run --project src/SmartContentRecommender.WpfClient/SmartContentRecommend
 
 Клиент работает с API по адресу `http://localhost:5078`.
 
+## Запуск Web-клиента
+
+1. Запустить API (см. раздел выше).
+2. Запустить веб-клиент:
+
+```bash
+dotnet run --project src/SmartContentRecommender.WebClient/SmartContentRecommender.WebClient.csproj
+```
+
+3. Открыть страницу:
+- http://localhost:5133/
+
+На первой вкладке отображаются `Вход` и `Регистрация`. После авторизации доступны вкладки `Контент` и `Рекомендации`, а для роли `Admin` — админ-панель управления пользователями.
+
 ## Краткий сценарий тестирования (Smoke Test)
 
 1. Запустить API и открыть Swagger.
@@ -81,6 +96,7 @@ Bearer <token>
   - упрощенный KNN
 - Админ-управление пользователями
 - WPF-клиент для пользователя и администратора
+- Web-клиент UI для демонстрации (вход/регистрация, контент, рекомендации, админ-панель)
 
 ## Диаграммы
 
