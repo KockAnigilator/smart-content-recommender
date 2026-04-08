@@ -47,7 +47,11 @@ public class AnalyticsService : IAnalyticsService
                 (action, content) => new
                 {
                     CategoryName = content.Category != null ? content.Category.Name : "Unknown",
-                    Weight = GetWeight(action.Type)
+                    Weight = action.Type == UserActionType.Like
+                        ? 3
+                        : action.Type == UserActionType.Click
+                            ? 2
+                            : 1
                 })
             .GroupBy(x => x.CategoryName)
             .Select(g => new InterestItemDto
@@ -69,7 +73,11 @@ public class AnalyticsService : IAnalyticsService
                 (action, ct) => new
                 {
                     TagName = ct.Tag != null ? ct.Tag.Name : "Unknown",
-                    Weight = GetWeight(action.Type)
+                    Weight = action.Type == UserActionType.Like
+                        ? 3
+                        : action.Type == UserActionType.Click
+                            ? 2
+                            : 1
                 })
             .GroupBy(x => x.TagName)
             .Select(g => new InterestItemDto
@@ -122,7 +130,11 @@ public class AnalyticsService : IAnalyticsService
             .Select(g => new
             {
                 ContentId = g.Key,
-                Score = g.Sum(x => GetWeight(x.Type))
+                Score = g.Sum(x => x.Type == UserActionType.Like
+                    ? 3
+                    : x.Type == UserActionType.Click
+                        ? 2
+                        : 1)
             })
             .ToDictionaryAsync(x => x.ContentId, x => x.Score, cancellationToken);
 
@@ -135,7 +147,15 @@ public class AnalyticsService : IAnalyticsService
                 _dbContext.Contents.AsNoTracking(),
                 action => action.ContentId,
                 content => content.Id,
-                (action, content) => new { content.CategoryId, Weight = GetWeight(action.Type) })
+                (action, content) => new
+                {
+                    content.CategoryId,
+                    Weight = action.Type == UserActionType.Like
+                        ? 3
+                        : action.Type == UserActionType.Click
+                            ? 2
+                            : 1
+                })
             .GroupBy(x => x.CategoryId)
             .Select(g => new { CategoryId = g.Key, Score = g.Sum(x => x.Weight) })
             .ToDictionaryAsync(x => x.CategoryId, x => x.Score, cancellationToken);
@@ -261,15 +281,5 @@ public class AnalyticsService : IAnalyticsService
         return report;
     }
 
-    private static int GetWeight(UserActionType type)
-    {
-        return type switch
-        {
-            UserActionType.View => 1,
-            UserActionType.Click => 2,
-            UserActionType.Like => 3,
-            _ => 1
-        };
-    }
 }
 

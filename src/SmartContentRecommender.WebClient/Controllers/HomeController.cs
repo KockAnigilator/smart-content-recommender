@@ -101,6 +101,14 @@ public class HomeController : Controller
                 {
                     model.Error ??= "DB viewer: нет доступа. Проверьте роль Admin.";
                 }
+                catch (HttpRequestException ex)
+                {
+                    model.Error ??= $"DB viewer: ошибка API ({(int?)ex.StatusCode ?? 0}).";
+                }
+                catch (TaskCanceledException)
+                {
+                    model.Error ??= "DB viewer: превышено время ожидания ответа API.";
+                }
                 if (model.AdminUsers.Count == 0)
                 {
                     model.Info ??= "Список пользователей пуст. Проверьте seed-данные и доступ к API admin/users.";

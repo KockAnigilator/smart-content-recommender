@@ -22,7 +22,7 @@ public class ScrApiClient
         _httpClient = new HttpClient
         {
             BaseAddress = new Uri(baseUrl),
-            Timeout = TimeSpan.FromSeconds(5)
+            Timeout = TimeSpan.FromSeconds(20)
         };
     }
 

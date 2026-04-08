@@ -33,11 +33,11 @@ public class AdminDbController : ControllerBase
     public async Task<IActionResult> Users([FromQuery] int limit = 200, CancellationToken cancellationToken = default)
     {
         var safe = Math.Clamp(limit, 1, 1000);
-        var items = await _db.Users.AsNoTracking()
+        var rows = await _db.Users.AsNoTracking()
             .OrderBy(u => u.Email)
             .Take(safe)
-            .Select(u => new { u.Id, u.Email, Role = u.Role.ToString(), u.IsBlocked, u.CreatedAtUtc })
             .ToListAsync(cancellationToken);
+        var items = rows.Select(u => new { u.Id, u.Email, Role = u.Role.ToString(), u.IsBlocked, u.CreatedAtUtc });
 
         return Ok(items);
     }
@@ -93,20 +93,20 @@ public class AdminDbController : ControllerBase
     public async Task<IActionResult> Actions([FromQuery] int limit = 200, CancellationToken cancellationToken = default)
     {
         var safe = Math.Clamp(limit, 1, 1000);
-        var items = await _db.UserActions.AsNoTracking()
+        var rows = await _db.UserActions.AsNoTracking()
             .Include(a => a.User)
             .Include(a => a.Content)
             .OrderByDescending(a => a.CreatedAtUtc)
             .Take(safe)
-            .Select(a => new
-            {
-                a.Id,
-                UserEmail = a.User != null ? a.User.Email : "",
-                ContentTitle = a.Content != null ? a.Content.Title : "",
-                Type = a.Type.ToString(),
-                a.CreatedAtUtc
-            })
             .ToListAsync(cancellationToken);
+        var items = rows.Select(a => new
+        {
+            a.Id,
+            UserEmail = a.User != null ? a.User.Email : "",
+            ContentTitle = a.Content != null ? a.Content.Title : "",
+            Type = a.Type.ToString(),
+            a.CreatedAtUtc
+        });
 
         return Ok(items);
     }

@@ -33,8 +33,14 @@ else {
 
 Start-Sleep -Seconds 2
 
-Write-Host "Starting WebClient..." -ForegroundColor Yellow
-Start-InNewWindow "SCR WebClient" "cd '$repoRoot'; dotnet run --launch-profile http --project src/SmartContentRecommender.WebClient/SmartContentRecommender.WebClient.csproj"
+$existingWeb = Get-NetTCPConnection -LocalPort 5133 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($null -eq $existingWeb) {
+    Write-Host "Starting WebClient..." -ForegroundColor Yellow
+    Start-InNewWindow "SCR WebClient" "cd '$repoRoot'; dotnet run --launch-profile http --project src/SmartContentRecommender.WebClient/SmartContentRecommender.WebClient.csproj"
+}
+else {
+    Write-Host "WebClient already running on 5133. Reusing existing instance." -ForegroundColor DarkYellow
+}
 
 Write-Host ""
 Write-Host "Done." -ForegroundColor Green

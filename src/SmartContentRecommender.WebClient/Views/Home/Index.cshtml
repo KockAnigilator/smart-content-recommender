@@ -91,6 +91,9 @@ else
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab" aria-controls="admin" aria-selected="false">Админ: Пользователи</button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="admin-db-tab" data-bs-toggle="tab" data-bs-target="#admin-db" type="button" role="tab" aria-controls="admin-db" aria-selected="false">Админ: База данных</button>
+            </li>
         }
     </ul>
 
@@ -415,11 +418,13 @@ else
                 </form>
             </div>
 
-            <hr class="my-4" />
+        </div>
+
+        <div class="tab-pane fade" id="admin-db" role="tabpanel" aria-labelledby="admin-db-tab">
             <h4 class="mb-3">Админ: База данных (просмотр таблиц)</h4>
             @if (Model.DbOverview is not null)
             {
-                <div class="mb-2">
+                <div class="mb-3">
                     <span class="badge text-bg-secondary me-1">users: @Model.DbOverview.Users</span>
                     <span class="badge text-bg-secondary me-1">categories: @Model.DbOverview.Categories</span>
                     <span class="badge text-bg-secondary me-1">tags: @Model.DbOverview.Tags</span>
@@ -427,15 +432,51 @@ else
                     <span class="badge text-bg-secondary">actions: @Model.DbOverview.Actions</span>
                 </div>
             }
+            else
+            {
+                <div class="alert alert-secondary">Не удалось загрузить overview БД.</div>
+            }
+
+            <h6>Users</h6>
+            <table class="table table-sm table-bordered">
+                <thead><tr><th>Email</th><th>Role</th><th>Blocked</th><th>Created</th><th>Id</th></tr></thead>
+                <tbody>
+                @if (Model.DbUsers.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-muted">Нет данных</td></tr>
+                }
+                else
+                {
+                    @foreach (var u in Model.DbUsers)
+                    {
+                        <tr>
+                            <td>@u.Email</td>
+                            <td>@u.Role</td>
+                            <td>@u.IsBlocked</td>
+                            <td>@u.CreatedAtUtc</td>
+                            <td class="small">@u.Id</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+
             <div class="row">
                 <div class="col-md-6">
                     <h6>Categories</h6>
                     <table class="table table-sm table-bordered">
                         <thead><tr><th>Name</th><th>Id</th></tr></thead>
                         <tbody>
-                        @foreach (var c in Model.DbCategories)
+                        @if (Model.DbCategories.Count == 0)
                         {
-                            <tr><td>@c.Name</td><td class="small">@c.Id</td></tr>
+                            <tr><td colspan="2" class="text-muted">Нет данных</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var c in Model.DbCategories)
+                            {
+                                <tr><td>@c.Name</td><td class="small">@c.Id</td></tr>
+                            }
                         }
                         </tbody>
                     </table>
@@ -445,26 +486,66 @@ else
                     <table class="table table-sm table-bordered">
                         <thead><tr><th>Name</th><th>Id</th></tr></thead>
                         <tbody>
-                        @foreach (var t in Model.DbTags)
+                        @if (Model.DbTags.Count == 0)
                         {
-                            <tr><td>@t.Name</td><td class="small">@t.Id</td></tr>
+                            <tr><td colspan="2" class="text-muted">Нет данных</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var t in Model.DbTags)
+                            {
+                                <tr><td>@t.Name</td><td class="small">@t.Id</td></tr>
+                            }
                         }
                         </tbody>
                     </table>
                 </div>
             </div>
+
             <h6>Contents (last)</h6>
             <table class="table table-sm table-bordered">
-                <thead><tr><th>Title</th><th>Category</th><th>Url</th><th>Id</th></tr></thead>
+                <thead><tr><th>Title</th><th>Category</th><th>Url</th><th>Created</th><th>Id</th></tr></thead>
                 <tbody>
-                @foreach (var c in Model.DbContents)
+                @if (Model.DbContents.Count == 0)
                 {
-                    <tr>
-                        <td>@c.Title</td>
-                        <td>@c.Category</td>
-                        <td class="small">@c.Url</td>
-                        <td class="small">@c.Id</td>
-                    </tr>
+                    <tr><td colspan="5" class="text-muted">Нет данных</td></tr>
+                }
+                else
+                {
+                    @foreach (var c in Model.DbContents)
+                    {
+                        <tr>
+                            <td>@c.Title</td>
+                            <td>@c.Category</td>
+                            <td class="small">@c.Url</td>
+                            <td>@c.CreatedAtUtc</td>
+                            <td class="small">@c.Id</td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+
+            <h6>Actions (last)</h6>
+            <table class="table table-sm table-bordered">
+                <thead><tr><th>User</th><th>Content</th><th>Type</th><th>Created</th><th>Id</th></tr></thead>
+                <tbody>
+                @if (Model.DbActions.Count == 0)
+                {
+                    <tr><td colspan="5" class="text-muted">Нет данных</td></tr>
+                }
+                else
+                {
+                    @foreach (var a in Model.DbActions)
+                    {
+                        <tr>
+                            <td>@a.UserEmail</td>
+                            <td>@a.ContentTitle</td>
+                            <td>@a.Type</td>
+                            <td>@a.CreatedAtUtc</td>
+                            <td class="small">@a.Id</td>
+                        </tr>
+                    }
                 }
                 </tbody>
             </table>
