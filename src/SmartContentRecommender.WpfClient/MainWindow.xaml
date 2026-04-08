@@ -4,118 +4,282 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Smart Content Recommender (WPF Client)" Height="720" Width="1200" MinWidth="1000" MinHeight="600">
+        Title="Smart Content Recommender (WPF Client)"
+        Height="760"
+        Width="1240"
+        MinWidth="1080"
+        MinHeight="640"
+        Background="#F5F7FA">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <Style TargetType="GroupBox">
+            <Setter Property="Margin" Value="0,0,0,12" />
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
     </Window.Resources>
-    <Grid Margin="12">
+    <Grid Margin="14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <GroupBox Header="Авторизация" Padding="10">
+        <Border Background="White" CornerRadius="8" Padding="10" BorderBrush="#DDE3EA" BorderThickness="1">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="200" />
-                    <ColumnDefinition Width="200" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="250" />
+                    <ColumnDefinition Width="250" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0" Margin="0,0,10,0" VerticalContentAlignment="Center" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBox Grid.Column="1" Margin="0,0,10,0" VerticalContentAlignment="Center" Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="2" Margin="0,0,10,0" Padding="12,6" Content="Регистрация" Command="{Binding RegisterCommand}" />
-                <Button Grid.Column="3" Margin="0,0,10,0" Padding="12,6" Content="Вход" Command="{Binding LoginCommand}" />
-                <Button Grid.Column="4" Margin="0,0,10,0" Padding="12,6" Content="Выход" Command="{Binding LogoutCommand}" />
-                <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Margin="0,0,12,0" FontWeight="SemiBold" Text="{Binding CurrentRole, StringFormat=Роль: {0}}" />
-                    <TextBlock Margin="0,0,12,0" FontWeight="SemiBold" Foreground="{Binding ApiStatusBrush}" Text="{Binding ApiStatusText}" />
-                    <Button Padding="10,4" Content="Проверить API" Command="{Binding CheckApiCommand}" />
+
+                <TextBox Grid.Column="0"
+                         Margin="0,0,10,0"
+                         VerticalContentAlignment="Center"
+                         Height="34"
+                         Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBox Grid.Column="1"
+                         Margin="0,0,10,0"
+                         VerticalContentAlignment="Center"
+                         Height="34"
+                         Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+                    <TextBlock Margin="0,0,14,0" FontWeight="SemiBold" Text="{Binding CurrentRole, StringFormat=Роль: {0}}" />
+                    <TextBlock Margin="0,0,14,0" FontWeight="SemiBold" Foreground="{Binding ApiStatusBrush}" Text="{Binding ApiStatusText}" />
+                    <Button Content="Проверить API" Command="{Binding CheckApiCommand}" />
                 </StackPanel>
             </Grid>
-        </GroupBox>
+        </Border>
 
-        <Grid Grid.Row="1" Margin="0,12,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="3*" />
-                <ColumnDefinition Width="2*" />
-            </Grid.ColumnDefinitions>
+        <TabControl Grid.Row="1" Margin="0,12,0,12">
+            <TabItem Header="Вход и регистрация">
+                <Border Background="White" CornerRadius="8" Padding="12" BorderBrush="#DDE3EA" BorderThickness="1">
+                    <Grid MaxWidth="620" HorizontalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-            <GroupBox Header="Контент" Margin="0,0,10,0" Padding="8">
-                <DockPanel>
-                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
-                        <Button Padding="10,4" Margin="0,0,8,0" Content="Обновить контент" Command="{Binding LoadContentCommand}" />
-                        <Button Padding="10,4" Margin="0,0,8,0" Content="View" Command="{Binding LogViewCommand}" />
-                        <Button Padding="10,4" Margin="0,0,8,0" Content="Like" Command="{Binding LogLikeCommand}" />
-                        <Button Padding="10,4" Margin="0,0,8,0" Content="Click" Command="{Binding LogClickCommand}" />
-                    </StackPanel>
+                        <TextBlock Text="Авторизация" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,14" />
+                        <TextBlock Grid.Row="1" Text="Email" Margin="0,0,0,6" />
+                        <TextBox Grid.Row="1" Height="34" Margin="70,0,0,12" VerticalContentAlignment="Center" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" />
 
-                    <DataGrid ItemsSource="{Binding ContentItems}"
-                              SelectedItem="{Binding SelectedContent}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
-                            <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" Width="*" />
-                            <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="2*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </DockPanel>
-            </GroupBox>
+                        <TextBlock Grid.Row="2" Text="Пароль" Margin="0,0,0,6" />
+                        <TextBox Grid.Row="2" Height="34" Margin="70,0,0,12" VerticalContentAlignment="Center" Text="{Binding Password, UpdateSourceTrigger=PropertyChanged}" />
 
-            <TabControl Grid.Column="1">
-                <TabItem Header="Рекомендации">
-                    <DockPanel Margin="8">
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
-                            <Button Padding="10,4" Margin="0,0,8,0" Content="Popular" Command="{Binding LoadPopularCommand}" />
-                            <Button Padding="10,4" Margin="0,0,8,0" Content="By Categories" Command="{Binding LoadByCategoriesCommand}" />
-                            <Button Padding="10,4" Content="KNN" Command="{Binding LoadKnnCommand}" />
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <Button Content="Регистрация" Command="{Binding RegisterCommand}" />
+                            <Button Content="Вход" Command="{Binding LoginCommand}" />
+                            <Button Content="Выход" Command="{Binding LogoutCommand}" />
                         </StackPanel>
+                    </Grid>
+                </Border>
+            </TabItem>
 
-                        <DataGrid ItemsSource="{Binding RecommendationItems}"
-                                  AutoGenerateColumns="False"
-                                  IsReadOnly="True">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
-                                <DataGridTextColumn Header="Причина" Binding="{Binding Reason}" Width="2*" />
-                                <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="*" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </DockPanel>
-                </TabItem>
+            <TabItem Header="Приложение" Visibility="{Binding IsAuthorized, Converter={StaticResource BoolToVisibilityConverter}}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
 
-                <TabItem Header="Админ: Пользователи"
-                         Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <DockPanel Margin="8">
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
-                            <Button Padding="10,4" Margin="0,0,8,0" Content="Обновить" Command="{Binding LoadAdminUsersCommand}" />
-                            <Button Padding="10,4" Margin="0,0,8,0" Content="Сделать Admin" Command="{Binding MakeAdminCommand}" />
-                            <Button Padding="10,4" Margin="0,0,8,0" Content="Сделать User" Command="{Binding MakeUserCommand}" />
-                            <Button Padding="10,4" Margin="0,0,8,0" Content="Блок" Command="{Binding BlockUserCommand}" />
-                            <Button Padding="10,4" Margin="0,0,8,0" Content="Разблок" Command="{Binding UnblockUserCommand}" />
-                            <Button Padding="10,4" Content="Удалить" Command="{Binding DeleteUserCommand}" />
-                        </StackPanel>
+                    <Border Background="White" CornerRadius="8" Padding="10" BorderBrush="#DDE3EA" BorderThickness="1" Margin="0,0,10,0">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Button Content="Обновить контент" Command="{Binding LoadContentCommand}" />
+                                <Button Content="View" Command="{Binding LogViewCommand}" />
+                                <Button Content="Like" Command="{Binding LogLikeCommand}" />
+                                <Button Content="Click" Command="{Binding LogClickCommand}" />
+                            </StackPanel>
 
-                        <DataGrid ItemsSource="{Binding AdminUsers}"
-                                  SelectedItem="{Binding SelectedAdminUser}"
-                                  AutoGenerateColumns="False"
-                                  IsReadOnly="True">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="2*" />
-                                <DataGridTextColumn Header="Роль" Binding="{Binding Role}" Width="*" />
-                                <DataGridCheckBoxColumn Header="Блок" Binding="{Binding IsBlocked}" Width="*" />
-                                <DataGridTextColumn Header="Создан" Binding="{Binding CreatedAtUtc}" Width="2*" />
-                            </DataGrid.Columns>
-                        </DataGrid>
-                    </DockPanel>
-                </TabItem>
-            </TabControl>
-        </Grid>
+                            <DataGrid ItemsSource="{Binding ContentItems}" SelectedItem="{Binding SelectedContent}" AutoGenerateColumns="False" IsReadOnly="True">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
+                                    <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" Width="*" />
+                                    <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="2*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </DockPanel>
+                    </Border>
 
-        <Grid Grid.Row="2">
+                    <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="10" BorderBrush="#DDE3EA" BorderThickness="1">
+                        <TabControl>
+                            <TabItem Header="Рекомендации">
+                                <DockPanel Margin="8">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                        <Button Content="Popular" Command="{Binding LoadPopularCommand}" />
+                                        <Button Content="By Categories" Command="{Binding LoadByCategoriesCommand}" />
+                                        <Button Content="KNN" Command="{Binding LoadKnnCommand}" />
+                                        <Button Content="Explain KNN" Command="{Binding LoadExplainCommand}" />
+                                        <Button Content="Профиль интересов" Command="{Binding LoadInterestProfileCommand}" />
+                                    </StackPanel>
+                                    <DataGrid ItemsSource="{Binding RecommendationItems}" AutoGenerateColumns="False" IsReadOnly="True">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
+                                            <DataGridTextColumn Header="Причина" Binding="{Binding Reason}" Width="2*" />
+                                            <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+
+                                    <TextBlock Margin="0,10,0,6" FontWeight="SemiBold" Text="Explainability (KNN factors)" />
+                                    <DataGrid ItemsSource="{Binding ExplainItems}" AutoGenerateColumns="False" IsReadOnly="True" Height="160">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
+                                            <DataGridTextColumn Header="Popular" Binding="{Binding PopularityFactor}" Width="*" />
+                                            <DataGridTextColumn Header="Category" Binding="{Binding CategoryAffinityFactor}" Width="*" />
+                                            <DataGridTextColumn Header="KNN" Binding="{Binding KnnSimilarityFactor}" Width="*" />
+                                            <DataGridTextColumn Header="Final" Binding="{Binding FinalScore}" Width="*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <GroupBox Header="Топ категорий" Grid.Column="0" Margin="0,0,6,0">
+                                            <DataGrid ItemsSource="{Binding InterestCategories}" AutoGenerateColumns="False" IsReadOnly="True" Height="120">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Категория" Binding="{Binding Name}" Width="2*" />
+                                                    <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="*" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </GroupBox>
+                                        <GroupBox Header="Топ тегов" Grid.Column="1" Margin="6,0,0,0">
+                                            <DataGrid ItemsSource="{Binding InterestTags}" AutoGenerateColumns="False" IsReadOnly="True" Height="120">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header="Тег" Binding="{Binding Name}" Width="2*" />
+                                                    <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="*" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                        </GroupBox>
+                                    </Grid>
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem Header="Админ: Пользователи" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <DockPanel Margin="8">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                        <Button Content="Обновить" Command="{Binding LoadAdminUsersCommand}" />
+                                        <Button Content="Сделать Admin" Command="{Binding MakeAdminCommand}" />
+                                        <Button Content="Сделать User" Command="{Binding MakeUserCommand}" />
+                                        <Button Content="Блок" Command="{Binding BlockUserCommand}" />
+                                        <Button Content="Разблок" Command="{Binding UnblockUserCommand}" />
+                                        <Button Content="Удалить" Command="{Binding DeleteUserCommand}" />
+                                        <Button Content="Metrics KNN" Command="{Binding LoadMetricsCommand}" />
+                                        <Button Content="Экспорт CSV" Command="{Binding ExportCsvCommand}" />
+                                        <Button Content="Экспорт PDF" Command="{Binding ExportPdfCommand}" />
+                                    </StackPanel>
+
+                                    <DataGrid ItemsSource="{Binding AdminUsers}" SelectedItem="{Binding SelectedAdminUser}" AutoGenerateColumns="False" IsReadOnly="True">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="2*" />
+                                            <DataGridTextColumn Header="Роль" Binding="{Binding Role}" Width="*" />
+                                            <DataGridCheckBoxColumn Header="Блок" Binding="{Binding IsBlocked}" Width="*" />
+                                            <DataGridTextColumn Header="Создан" Binding="{Binding CreatedAtUtc}" Width="2*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem Header="Админ: Контент (CRUD)" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <DockPanel Margin="8">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                        <Button Content="Справочники" Command="{Binding LoadAdminDictionariesCommand}" />
+                                        <Button Content="Создать" Command="{Binding CreateContentCommand}" />
+                                        <Button Content="Обновить" Command="{Binding UpdateContentCommand}" />
+                                        <Button Content="Удалить" Command="{Binding DeleteContentCommand}" />
+                                    </StackPanel>
+
+                                    <Grid Margin="0,0,0,8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                                            <TextBlock Text="Title" />
+                                            <TextBox Height="30" Text="{Binding ContentTitle, UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBlock Margin="0,8,0,0" Text="Url" />
+                                            <TextBox Height="30" Text="{Binding ContentUrl, UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBlock Margin="0,8,0,0" Text="Description" />
+                                            <TextBox Height="60" TextWrapping="Wrap" Text="{Binding ContentDescription, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+
+                                        <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                            <TextBlock Text="Category" />
+                                            <ComboBox Height="30"
+                                                      ItemsSource="{Binding Categories}"
+                                                      SelectedItem="{Binding SelectedCategory}"
+                                                      DisplayMemberPath="Name" />
+                                            <TextBlock Margin="0,8,0,0" Text="TagIds CSV (guid,guid,...)" />
+                                            <TextBox Height="30" Text="{Binding ContentTagIdsCsv, UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBlock Margin="0,8,0,0" FontSize="11" Foreground="Gray"
+                                                       Text="GUID тегов можно посмотреть во вкладке DB Viewer." />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="Текущий контент (выбери строку для Update/Delete)" />
+                                    <DataGrid ItemsSource="{Binding ContentItems}" SelectedItem="{Binding SelectedContent}" AutoGenerateColumns="False" IsReadOnly="True">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
+                                            <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" Width="*" />
+                                            <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="2*" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </DockPanel>
+                            </TabItem>
+
+                            <TabItem Header="Админ: DB Viewer" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <DockPanel Margin="8">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                        <Button Content="Обновить" Command="{Binding LoadDbViewerCommand}" />
+                                        <TextBlock Margin="10,0,0,0" VerticalAlignment="Center">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="Users={0} | Categories={1} | Tags={2} | Contents={3} | Actions={4}">
+                                                    <Binding Path="DbOverview.Users" />
+                                                    <Binding Path="DbOverview.Categories" />
+                                                    <Binding Path="DbOverview.Tags" />
+                                                    <Binding Path="DbOverview.Contents" />
+                                                    <Binding Path="DbOverview.Actions" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <TabControl>
+                                        <TabItem Header="Users">
+                                            <DataGrid ItemsSource="{Binding DbUsers}" AutoGenerateColumns="True" IsReadOnly="True" />
+                                        </TabItem>
+                                        <TabItem Header="Categories">
+                                            <DataGrid ItemsSource="{Binding DbCategories}" AutoGenerateColumns="True" IsReadOnly="True" />
+                                        </TabItem>
+                                        <TabItem Header="Tags">
+                                            <DataGrid ItemsSource="{Binding DbTags}" AutoGenerateColumns="True" IsReadOnly="True" />
+                                        </TabItem>
+                                        <TabItem Header="Contents">
+                                            <DataGrid ItemsSource="{Binding DbContents}" AutoGenerateColumns="True" IsReadOnly="True" />
+                                        </TabItem>
+                                        <TabItem Header="Actions">
+                                            <DataGrid ItemsSource="{Binding DbActions}" AutoGenerateColumns="True" IsReadOnly="True" />
+                                        </TabItem>
+                                    </TabControl>
+                                </DockPanel>
+                            </TabItem>
+                        </TabControl>
+                    </Border>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <Border Grid.Row="2" Background="White" CornerRadius="8" Padding="8" BorderBrush="#DDE3EA" BorderThickness="1">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="220" />
@@ -129,5 +293,6 @@
                 <ProgressBar Width="120" Height="12" IsIndeterminate="True" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibilityConverter}}" />
             </StackPanel>
         </Grid>
+        </Border>
     </Grid>
 </Window>

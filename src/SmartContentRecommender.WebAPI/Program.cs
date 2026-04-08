@@ -77,12 +77,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await DataSeeder.SeedAsync(dbContext);
+}
 
+if (app.Environment.IsDevelopment())
+{
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();

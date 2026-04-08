@@ -22,6 +22,14 @@ public class MainViewModel : ObservableObject
     private Brush _apiStatusBrush = Brushes.DarkOrange;
     private ContentItem? _selectedContent;
     private AdminUserItem? _selectedAdminUser;
+    private RecommendationMetricsItem? _selectedMetrics;
+    private CategoryItem? _selectedCategory;
+    private TagItem? _selectedTag;
+    private DbOverview? _dbOverview;
+    private string _contentTitle = string.Empty;
+    private string _contentUrl = string.Empty;
+    private string _contentDescription = string.Empty;
+    private string _contentTagIdsCsv = string.Empty;
 
     public MainViewModel()
     {
@@ -37,6 +45,8 @@ public class MainViewModel : ObservableObject
         LoadPopularCommand = new RelayCommand(async () => await LoadPopularAsync(), () => !IsBusy);
         LoadByCategoriesCommand = new RelayCommand(async () => await LoadByCategoriesAsync(), () => IsAuthorized && !IsBusy);
         LoadKnnCommand = new RelayCommand(async () => await LoadKnnAsync(), () => IsAuthorized && !IsBusy);
+        LoadExplainCommand = new RelayCommand(async () => await LoadExplainAsync(), () => IsAuthorized && !IsBusy);
+        LoadInterestProfileCommand = new RelayCommand(async () => await LoadInterestProfileAsync(), () => IsAuthorized && !IsBusy);
 
         LoadAdminUsersCommand = new RelayCommand(async () => await LoadAdminUsersAsync(), () => IsAdmin && !IsBusy);
         MakeAdminCommand = new RelayCommand(async () => await ChangeRoleAsync("Admin"), () => IsAdmin && SelectedAdminUser is not null && !IsBusy);
@@ -44,6 +54,14 @@ public class MainViewModel : ObservableObject
         BlockUserCommand = new RelayCommand(async () => await SetBlockedAsync(true), () => IsAdmin && SelectedAdminUser is not null && !IsBusy);
         UnblockUserCommand = new RelayCommand(async () => await SetBlockedAsync(false), () => IsAdmin && SelectedAdminUser is not null && !IsBusy);
         DeleteUserCommand = new RelayCommand(async () => await DeleteUserAsync(), () => IsAdmin && SelectedAdminUser is not null && !IsBusy);
+        LoadMetricsCommand = new RelayCommand(async () => await LoadMetricsAsync(), () => IsAdmin && SelectedAdminUser is not null && !IsBusy);
+        ExportCsvCommand = new RelayCommand(async () => await ExportReportAsync("csv"), () => IsAdmin && !IsBusy);
+        ExportPdfCommand = new RelayCommand(async () => await ExportReportAsync("pdf"), () => IsAdmin && !IsBusy);
+        LoadAdminDictionariesCommand = new RelayCommand(async () => await LoadAdminDictionariesAsync(), () => IsAdmin && !IsBusy);
+        CreateContentCommand = new RelayCommand(async () => await CreateContentAsync(), () => IsAdmin && SelectedCategory is not null && !IsBusy);
+        UpdateContentCommand = new RelayCommand(async () => await UpdateContentAsync(), () => IsAdmin && SelectedCategory is not null && SelectedContent is not null && !IsBusy);
+        DeleteContentCommand = new RelayCommand(async () => await DeleteContentAsync(), () => IsAdmin && SelectedContent is not null && !IsBusy);
+        LoadDbViewerCommand = new RelayCommand(async () => await LoadDbViewerAsync(), () => IsAdmin && !IsBusy);
         CheckApiCommand = new RelayCommand(async () => await UpdateApiStatusAsync(), () => !IsBusy);
 
         _ = UpdateApiStatusAsync();
@@ -107,6 +125,16 @@ public class MainViewModel : ObservableObject
     public ObservableCollection<ContentItem> ContentItems { get; } = [];
     public ObservableCollection<RecommendationItem> RecommendationItems { get; } = [];
     public ObservableCollection<AdminUserItem> AdminUsers { get; } = [];
+    public ObservableCollection<RecommendationExplanationItem> ExplainItems { get; } = [];
+    public ObservableCollection<InterestProfileItem> InterestCategories { get; } = [];
+    public ObservableCollection<InterestProfileItem> InterestTags { get; } = [];
+    public ObservableCollection<CategoryItem> Categories { get; } = [];
+    public ObservableCollection<TagItem> Tags { get; } = [];
+    public ObservableCollection<DbUserRow> DbUsers { get; } = [];
+    public ObservableCollection<CategoryItem> DbCategories { get; } = [];
+    public ObservableCollection<TagItem> DbTags { get; } = [];
+    public ObservableCollection<DbContentRow> DbContents { get; } = [];
+    public ObservableCollection<DbActionRow> DbActions { get; } = [];
 
     public bool IsBusy
     {
@@ -153,6 +181,60 @@ public class MainViewModel : ObservableObject
         }
     }
 
+    public RecommendationMetricsItem? SelectedMetrics
+    {
+        get => _selectedMetrics;
+        set => SetProperty(ref _selectedMetrics, value);
+    }
+
+    public CategoryItem? SelectedCategory
+    {
+        get => _selectedCategory;
+        set
+        {
+            if (SetProperty(ref _selectedCategory, value))
+            {
+                RaiseCanExecuteChanged();
+            }
+        }
+    }
+
+    public TagItem? SelectedTag
+    {
+        get => _selectedTag;
+        set => SetProperty(ref _selectedTag, value);
+    }
+
+    public DbOverview? DbOverview
+    {
+        get => _dbOverview;
+        set => SetProperty(ref _dbOverview, value);
+    }
+
+    public string ContentTitle
+    {
+        get => _contentTitle;
+        set => SetProperty(ref _contentTitle, value);
+    }
+
+    public string ContentUrl
+    {
+        get => _contentUrl;
+        set => SetProperty(ref _contentUrl, value);
+    }
+
+    public string ContentDescription
+    {
+        get => _contentDescription;
+        set => SetProperty(ref _contentDescription, value);
+    }
+
+    public string ContentTagIdsCsv
+    {
+        get => _contentTagIdsCsv;
+        set => SetProperty(ref _contentTagIdsCsv, value);
+    }
+
     public RelayCommand RegisterCommand { get; }
     public RelayCommand LoginCommand { get; }
     public RelayCommand LogoutCommand { get; }
@@ -163,12 +245,22 @@ public class MainViewModel : ObservableObject
     public RelayCommand LoadPopularCommand { get; }
     public RelayCommand LoadByCategoriesCommand { get; }
     public RelayCommand LoadKnnCommand { get; }
+    public RelayCommand LoadExplainCommand { get; }
+    public RelayCommand LoadInterestProfileCommand { get; }
     public RelayCommand LoadAdminUsersCommand { get; }
     public RelayCommand MakeAdminCommand { get; }
     public RelayCommand MakeUserCommand { get; }
     public RelayCommand BlockUserCommand { get; }
     public RelayCommand UnblockUserCommand { get; }
     public RelayCommand DeleteUserCommand { get; }
+    public RelayCommand LoadMetricsCommand { get; }
+    public RelayCommand ExportCsvCommand { get; }
+    public RelayCommand ExportPdfCommand { get; }
+    public RelayCommand LoadAdminDictionariesCommand { get; }
+    public RelayCommand CreateContentCommand { get; }
+    public RelayCommand UpdateContentCommand { get; }
+    public RelayCommand DeleteContentCommand { get; }
+    public RelayCommand LoadDbViewerCommand { get; }
     public RelayCommand CheckApiCommand { get; }
 
     public bool IsAdmin => CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase);
@@ -213,6 +305,10 @@ public class MainViewModel : ObservableObject
             Status = $"Авторизация успешна. Роль: {CurrentRole}";
             await LoadContentAsync();
             await LoadPopularAsync();
+            if (IsAdmin)
+            {
+                await LoadAdminDictionariesAsync();
+            }
             if (IsAdmin)
             {
                 await LoadAdminUsersAsync();
@@ -291,6 +387,31 @@ public class MainViewModel : ObservableObject
         });
     }
 
+    private async Task LoadExplainAsync()
+    {
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var items = await _apiClient.GetExplainAsync("knn", 10);
+            ReplaceItems(ExplainItems, items);
+            Status = $"Explainability записей: {items.Count}";
+            await UpdateApiStatusAsync();
+        });
+    }
+
+    private async Task LoadInterestProfileAsync()
+    {
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var profile = await _apiClient.GetInterestProfileAsync(5);
+            ReplaceItems(InterestCategories, profile?.TopCategories ?? []);
+            ReplaceItems(InterestTags, profile?.TopTags ?? []);
+            Status = profile is null
+                ? "Профиль интересов недоступен."
+                : $"Профиль интересов загружен. Действий: {profile.TotalActions}";
+            await UpdateApiStatusAsync();
+        });
+    }
+
     private async Task LoadAdminUsersAsync()
     {
         await ExecuteWithUiStateAsync(async () =>
@@ -299,6 +420,93 @@ public class MainViewModel : ObservableObject
             ReplaceItems(AdminUsers, users);
             Status = $"Пользователей загружено: {users.Count}";
             await UpdateApiStatusAsync();
+        });
+    }
+
+    private async Task LoadAdminDictionariesAsync()
+    {
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var categories = await _apiClient.GetCategoriesAsync();
+            ReplaceItems(Categories, categories);
+            var tags = await _apiClient.GetTagsAsync();
+            ReplaceItems(Tags, tags);
+            Status = $"Справочники загружены: categories={categories.Count}, tags={tags.Count}";
+        });
+    }
+
+    private static List<Guid> ParseGuids(string csv)
+    {
+        if (string.IsNullOrWhiteSpace(csv)) return [];
+        return csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(s => Guid.TryParse(s, out var g) ? g : Guid.Empty)
+            .Where(g => g != Guid.Empty)
+            .ToList();
+    }
+
+    private async Task CreateContentAsync()
+    {
+        if (SelectedCategory is null) return;
+
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var ok = await _apiClient.CreateContentAsync(new CreateContentRequest
+            {
+                Title = ContentTitle.Trim(),
+                Url = ContentUrl.Trim(),
+                Description = string.IsNullOrWhiteSpace(ContentDescription) ? null : ContentDescription.Trim(),
+                CategoryId = SelectedCategory.Id,
+                TagIds = ParseGuids(ContentTagIdsCsv)
+            });
+
+            Status = ok ? "Контент создан." : "Не удалось создать контент.";
+            if (ok) await LoadContentAsync();
+        });
+    }
+
+    private async Task UpdateContentAsync()
+    {
+        if (SelectedCategory is null || SelectedContent is null) return;
+
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var ok = await _apiClient.UpdateContentAsync(SelectedContent.Id, new UpdateContentRequest
+            {
+                Title = ContentTitle.Trim(),
+                Url = ContentUrl.Trim(),
+                Description = string.IsNullOrWhiteSpace(ContentDescription) ? null : ContentDescription.Trim(),
+                CategoryId = SelectedCategory.Id,
+                TagIds = ParseGuids(ContentTagIdsCsv)
+            });
+
+            Status = ok ? "Контент обновлён." : "Не удалось обновить контент.";
+            if (ok) await LoadContentAsync();
+        });
+    }
+
+    private async Task DeleteContentAsync()
+    {
+        if (SelectedContent is null) return;
+
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var ok = await _apiClient.DeleteContentAsync(SelectedContent.Id);
+            Status = ok ? "Контент удалён." : "Не удалось удалить контент.";
+            if (ok) await LoadContentAsync();
+        });
+    }
+
+    private async Task LoadDbViewerAsync()
+    {
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            DbOverview = await _apiClient.GetDbOverviewAsync();
+            ReplaceItems(DbUsers, await _apiClient.GetDbUsersAsync());
+            ReplaceItems(DbCategories, await _apiClient.GetDbCategoriesAsync());
+            ReplaceItems(DbTags, await _apiClient.GetDbTagsAsync());
+            ReplaceItems(DbContents, await _apiClient.GetDbContentsAsync());
+            ReplaceItems(DbActions, await _apiClient.GetDbActionsAsync());
+            Status = "DB viewer обновлён.";
         });
     }
 
@@ -356,12 +564,44 @@ public class MainViewModel : ObservableObject
         });
     }
 
+    private async Task LoadMetricsAsync()
+    {
+        if (SelectedAdminUser is null)
+        {
+            return;
+        }
+
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            SelectedMetrics = await _apiClient.GetAdminMetricsAsync(SelectedAdminUser.Id, "knn", 10);
+            Status = SelectedMetrics is null
+                ? "Не удалось загрузить метрики."
+                : $"Метрики KNN: P@K={SelectedMetrics.PrecisionAtK:F3}, R@K={SelectedMetrics.RecallAtK:F3}, NDCG={SelectedMetrics.NdcgAtK:F3}";
+        });
+    }
+
+    private async Task ExportReportAsync(string format)
+    {
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var path = await _apiClient.DownloadReportAsync(format);
+            Status = path is null
+                ? $"Не удалось выгрузить {format.ToUpperInvariant()}."
+                : $"Отчет сохранен: {path}";
+        });
+    }
+
     private async Task ExecuteWithUiStateAsync(Func<Task> action)
     {
         try
         {
             IsBusy = true;
             await action();
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+        {
+            Status = "Нет доступа (нужно войти / недостаточно прав).";
+            await UpdateApiStatusAsync();
         }
         catch (HttpRequestException)
         {
@@ -422,12 +662,22 @@ public class MainViewModel : ObservableObject
         LogClickCommand.RaiseCanExecuteChanged();
         LoadByCategoriesCommand.RaiseCanExecuteChanged();
         LoadKnnCommand.RaiseCanExecuteChanged();
+        LoadExplainCommand.RaiseCanExecuteChanged();
+        LoadInterestProfileCommand.RaiseCanExecuteChanged();
         LoadAdminUsersCommand.RaiseCanExecuteChanged();
         MakeAdminCommand.RaiseCanExecuteChanged();
         MakeUserCommand.RaiseCanExecuteChanged();
         BlockUserCommand.RaiseCanExecuteChanged();
         UnblockUserCommand.RaiseCanExecuteChanged();
         DeleteUserCommand.RaiseCanExecuteChanged();
+        LoadMetricsCommand.RaiseCanExecuteChanged();
+        ExportCsvCommand.RaiseCanExecuteChanged();
+        ExportPdfCommand.RaiseCanExecuteChanged();
+        LoadAdminDictionariesCommand.RaiseCanExecuteChanged();
+        CreateContentCommand.RaiseCanExecuteChanged();
+        UpdateContentCommand.RaiseCanExecuteChanged();
+        DeleteContentCommand.RaiseCanExecuteChanged();
+        LoadDbViewerCommand.RaiseCanExecuteChanged();
         CheckApiCommand.RaiseCanExecuteChanged();
     }
 

@@ -16,7 +16,7 @@ public class HomeController : Controller
         _tokenStore = tokenStore;
     }
 
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public async Task<IActionResult> Index(Guid? metricsUserId = null, string metricsAlgorithm = "knn", CancellationToken cancellationToken = default)
     {
         var model = new HomeIndexViewModel();
         model.Error = TempData["Error"] as string;
@@ -60,11 +60,58 @@ public class HomeController : Controller
 
             model.ByCategories = await _api.GetByCategoriesAsync(cancellationToken);
             model.Knn = await _api.GetKnnAsync(cancellationToken);
-            model.InterestProfile = await _api.GetInterestProfileAsync(cancellationToken);
+            try
+            {
+                model.InterestProfile = await _api.GetInterestProfileAsync(cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+            {
+                model.Error ??= "Профиль интересов: нет доступа. Перелогиньтесь.";
+            }
+
+            try
+            {
+                model.ExplainKnn = await _api.GetExplainAsync("knn", 10, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+            {
+                model.Error ??= "Explainability: нет доступа. Перелогиньтесь.";
+            }
+            if (model.InterestProfile is null)
+            {
+                model.Info ??= "Профиль интересов пуст. Сделайте несколько действий View/Like/Click и обновите страницу.";
+            }
 
             if (model.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
                 model.AdminUsers = await _api.GetAdminUsersAsync(cancellationToken);
+                model.Categories = await _api.GetCategoriesAsync(cancellationToken);
+                model.Tags = await _api.GetTagsAsync(cancellationToken);
+                try
+                {
+                    model.DbOverview = await _api.GetAdminDbOverviewAsync(cancellationToken);
+                    model.DbUsers = await _api.GetAdminDbUsersAsync(cancellationToken);
+                    model.DbCategories = await _api.GetAdminDbCategoriesAsync(cancellationToken);
+                    model.DbTags = await _api.GetAdminDbTagsAsync(cancellationToken);
+                    model.DbContents = await _api.GetAdminDbContentsAsync(cancellationToken);
+                    model.DbActions = await _api.GetAdminDbActionsAsync(cancellationToken);
+                }
+                catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+                {
+                    model.Error ??= "DB viewer: нет доступа. Проверьте роль Admin.";
+                }
+                if (model.AdminUsers.Count == 0)
+                {
+                    model.Info ??= "Список пользователей пуст. Проверьте seed-данные и доступ к API admin/users.";
+                }
+
+                var selectedUserId = metricsUserId ?? model.AdminUsers.FirstOrDefault()?.Id;
+                if (selectedUserId.HasValue && selectedUserId.Value != Guid.Empty)
+                {
+                    model.SelectedMetricsUserId = selectedUserId;
+                    model.SelectedMetricsAlgorithm = metricsAlgorithm;
+                    model.SelectedMetrics = await _api.GetAdminMetricsAsync(selectedUserId.Value, metricsAlgorithm, 10, cancellationToken);
+                }
             }
         }
         catch
@@ -139,6 +186,12 @@ public class HomeController : Controller
     }
 
     [HttpPost]
+    public IActionResult ShowMetrics(Guid userId, string algorithm = "knn")
+    {
+        return RedirectToAction(nameof(Index), new { metricsUserId = userId, metricsAlgorithm = algorithm });
+    }
+
+    [HttpPost]
     public async Task<IActionResult> DeleteUser(Guid userId, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
@@ -157,6 +210,86 @@ public class HomeController : Controller
             TempData["Info"] = "Пользователь удалён.";
         }
 
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DownloadReportCsv(CancellationToken cancellationToken)
+    {
+        var currentRole = _tokenStore.GetRole();
+        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        var file = await _api.DownloadAdminReportAsync("csv", cancellationToken);
+        if (file is null)
+        {
+            TempData["Error"] = "Не удалось выгрузить CSV отчет.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return File(file.Value.Bytes, file.Value.ContentType, file.Value.FileName);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DownloadReportPdf(CancellationToken cancellationToken)
+    {
+        var currentRole = _tokenStore.GetRole();
+        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        var file = await _api.DownloadAdminReportAsync("pdf", cancellationToken);
+        if (file is null)
+        {
+            TempData["Error"] = "Не удалось выгрузить PDF отчет.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return File(file.Value.Bytes, file.Value.ContentType, file.Value.FileName);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateContent(CreateContentVm vm, CancellationToken cancellationToken)
+    {
+        var currentRole = _tokenStore.GetRole();
+        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        var ok = await _api.CreateContentAsync(vm, cancellationToken);
+        TempData[ok ? "Info" : "Error"] = ok ? "Контент создан." : "Не удалось создать контент.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UpdateContent(UpdateContentVm vm, CancellationToken cancellationToken)
+    {
+        var currentRole = _tokenStore.GetRole();
+        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        var ok = await _api.UpdateContentAsync(vm, cancellationToken);
+        TempData[ok ? "Info" : "Error"] = ok ? "Контент обновлён." : "Не удалось обновить контент.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteContent(Guid id, CancellationToken cancellationToken)
+    {
+        var currentRole = _tokenStore.GetRole();
+        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            return Forbid();
+        }
+
+        var ok = await _api.DeleteContentAsync(id, cancellationToken);
+        TempData[ok ? "Info" : "Error"] = ok ? "Контент удалён." : "Не удалось удалить контент.";
         return RedirectToAction(nameof(Index));
     }
 
