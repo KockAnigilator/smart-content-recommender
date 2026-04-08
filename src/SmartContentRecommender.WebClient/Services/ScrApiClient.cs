@@ -111,6 +111,19 @@ public class ScrApiClient
         return await response.Content.ReadFromJsonAsync<List<RecommendationItem>>(_jsonOptions, cancellationToken) ?? [];
     }
 
+    public async Task<InterestProfileVm?> GetInterestProfileAsync(CancellationToken cancellationToken = default)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/useractions/interest-profile?top=5");
+        AddAuthHeader(request);
+        var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadFromJsonAsync<InterestProfileVm>(_jsonOptions, cancellationToken);
+    }
+
     public async Task<List<AdminUserItem>> GetAdminUsersAsync(CancellationToken cancellationToken = default)
     {
         var request = new HttpRequestMessage(HttpMethod.Get, "/api/admin/users");

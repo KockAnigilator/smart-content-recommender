@@ -2,11 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SmartContentRecommender.Application.Admin.Interfaces;
+using SmartContentRecommender.Application.Analytics.Interfaces;
 using SmartContentRecommender.Application.Auth.Interfaces;
 using SmartContentRecommender.Application.Content.Interfaces;
 using SmartContentRecommender.Application.Recommendations.Interfaces;
 using SmartContentRecommender.Application.UserActions.Interfaces;
 using SmartContentRecommender.Infrastructure.Admin;
+using SmartContentRecommender.Infrastructure.Analytics;
 using SmartContentRecommender.Infrastructure.Auth;
 using SmartContentRecommender.Infrastructure.Content;
 using SmartContentRecommender.Infrastructure.Persistence;
@@ -39,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<IUserActionService, UserActionService>();
         services.AddScoped<IRecommendationService, RecommendationService>();
         services.AddScoped<IRecommendationMetricsService, RecommendationMetricsService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
 
         return services;
     }

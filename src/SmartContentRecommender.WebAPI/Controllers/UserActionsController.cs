@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartContentRecommender.Application.Analytics.Interfaces;
 using SmartContentRecommender.Application.UserActions.Interfaces;
 using SmartContentRecommender.Application.UserActions.Models;
 
@@ -12,10 +13,12 @@ namespace SmartContentRecommender.WebAPI.Controllers;
 public class UserActionsController : ControllerBase
 {
     private readonly IUserActionService _userActionService;
+    private readonly IAnalyticsService _analyticsService;
 
-    public UserActionsController(IUserActionService userActionService)
+    public UserActionsController(IUserActionService userActionService, IAnalyticsService analyticsService)
     {
         _userActionService = userActionService;
+        _analyticsService = analyticsService;
     }
 
     [HttpPost("log")]
@@ -47,6 +50,19 @@ public class UserActionsController : ControllerBase
 
         var history = await _userActionService.GetUserHistoryAsync(userId.Value, limit, cancellationToken);
         return Ok(history);
+    }
+
+    [HttpGet("interest-profile")]
+    public async Task<IActionResult> InterestProfile([FromQuery] int top = 5, CancellationToken cancellationToken = default)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null)
+        {
+            return Unauthorized("Не удалось определить пользователя из JWT токена.");
+        }
+
+        var profile = await _analyticsService.GetInterestProfileAsync(userId.Value, top, cancellationToken);
+        return Ok(profile);
     }
 
     private Guid? GetCurrentUserId()

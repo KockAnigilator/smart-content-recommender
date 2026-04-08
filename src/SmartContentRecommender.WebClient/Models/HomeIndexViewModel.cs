@@ -14,6 +14,7 @@ public class HomeIndexViewModel
     public List<RecommendationItem> Popular { get; set; } = [];
     public List<RecommendationItem> ByCategories { get; set; } = [];
     public List<RecommendationItem> Knn { get; set; } = [];
+    public InterestProfileVm? InterestProfile { get; set; }
 
     public List<AdminUserItem> AdminUsers { get; set; } = [];
 }

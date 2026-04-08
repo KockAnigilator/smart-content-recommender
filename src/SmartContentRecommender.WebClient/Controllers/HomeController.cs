@@ -23,6 +23,11 @@ public class HomeController : Controller
         model.Info = TempData["Info"] as string;
 
         model.ApiOnline = await _api.ApiAvailabilityCheckAsync(cancellationToken);
+        if (!model.ApiOnline)
+        {
+            model.Info ??= "API сейчас недоступен. Сначала запустите WebAPI, затем обновите страницу.";
+            return View(model);
+        }
 
         var token = _tokenStore.GetToken();
         model.IsAuthenticated = !string.IsNullOrWhiteSpace(token);
@@ -55,6 +60,7 @@ public class HomeController : Controller
 
             model.ByCategories = await _api.GetByCategoriesAsync(cancellationToken);
             model.Knn = await _api.GetKnnAsync(cancellationToken);
+            model.InterestProfile = await _api.GetInterestProfileAsync(cancellationToken);
 
             if (model.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
@@ -63,8 +69,8 @@ public class HomeController : Controller
         }
         catch
         {
-            // For UI stability on demo: keep page open, show message to user.
-            model.Error ??= "Не удалось загрузить данные. Проверьте доступность API.";
+            // Оставляем страницу рабочей и даем понятное сообщение.
+            model.Error ??= "Не удалось загрузить данные с API. Обновите страницу или проверьте WebAPI.";
         }
 
         return View(model);

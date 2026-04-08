@@ -3,7 +3,8 @@
     ViewData["Title"] = "Smart Content Recommender (Web)";
 }
 
-<div class="mb-3">
+<div class="mx-auto" style="max-width: 980px;">
+<div class="mb-3 text-center">
     @if (Model.ApiOnline)
     {
         <div class="alert alert-success py-2 mb-2">API: online</div>
@@ -22,10 +23,9 @@
         <div class="alert alert-info py-2 mb-2">@Model.Info</div>
     }
 </div>
-}
 @if (!Model.IsAuthenticated)
 {
-    <ul class="nav nav-tabs" id="authTabs" role="tablist">
+    <ul class="nav nav-tabs justify-content-center" id="authTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">Вход</button>
         </li>
@@ -34,9 +34,9 @@
         </li>
     </ul>
 
-    <div class="tab-content border border-top-0 p-3" id="authTabsContent">
+    <div class="tab-content border border-top-0 p-4" id="authTabsContent">
         <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
-            <h4 class="mb-3">Вход</h4>
+            <h4 class="mb-3 text-center">Вход</h4>
             <form method="post" asp-controller="Account" asp-action="Login">
                 @Html.AntiForgeryToken()
                 <div class="mb-2">
@@ -47,10 +47,12 @@
                     <label class="form-label">Пароль</label>
                     <input class="form-control" type="password" name="Password" required />
                 </div>
-                <button class="btn btn-primary" type="submit">Войти</button>
+                <div class="text-center">
+                    <button class="btn btn-primary px-4" type="submit">Войти</button>
+                </div>
             </form>
 
-            <div class="mt-3 small text-muted">
+            <div class="mt-3 small text-muted text-center">
                 Демо пользователи (seed в Development):
                 <div>admin@local / Admin123!</div>
                 <div>user1@local / User123!</div>
@@ -58,7 +60,7 @@
         </div>
 
         <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-            <h4 class="mb-3">Регистрация</h4>
+            <h4 class="mb-3 text-center">Регистрация</h4>
             <form method="post" asp-controller="Account" asp-action="Register">
                 @Html.AntiForgeryToken()
                 <div class="mb-2">
@@ -69,14 +71,16 @@
                     <label class="form-label">Пароль</label>
                     <input class="form-control" type="password" name="Password" required />
                 </div>
-                <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
+                <div class="text-center">
+                    <button class="btn btn-primary px-4" type="submit">Зарегистрироваться</button>
+                </div>
             </form>
         </div>
     </div>
 }
 else
 {
-    <div class="mb-2">
+    <div class="mb-3 text-center">
         <div><b>Вы в системе.</b> Роль: <span class="fw-semibold">@Model.Role</span></div>
         <div class="mt-2">
             <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
@@ -86,12 +90,15 @@ else
         </div>
     </div>
 
-    <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+    <ul class="nav nav-tabs justify-content-center" id="mainTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="true">Контент</button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="recommend-tab" data-bs-toggle="tab" data-bs-target="#recommend" type="button" role="tab" aria-controls="recommend" aria-selected="false">Рекомендации</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Профиль интересов</button>
         </li>
 
         @if (Model.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
@@ -175,6 +182,59 @@ else
             </div>
         </div>
 
+        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+            <h4 class="mb-3">Персональный профиль интересов</h4>
+
+            @if (Model.InterestProfile is null)
+            {
+                <div class="alert alert-secondary">Пока не удалось построить профиль интересов.</div>
+            }
+            else
+            {
+                <div class="mb-2"><b>Всего действий:</b> @Model.InterestProfile.TotalActions</div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Топ категорий</h5>
+                        <ul class="list-group">
+                            @if (Model.InterestProfile.TopCategories.Count == 0)
+                            {
+                                <li class="list-group-item text-muted">Нет данных</li>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.InterestProfile.TopCategories)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@item.Name</span>
+                                        <span class="badge text-bg-primary rounded-pill">@item.Score</span>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Топ тегов</h5>
+                        <ul class="list-group">
+                            @if (Model.InterestProfile.TopTags.Count == 0)
+                            {
+                                <li class="list-group-item text-muted">Нет данных</li>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model.InterestProfile.TopTags)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span>@item.Name</span>
+                                        <span class="badge text-bg-success rounded-pill">@item.Score</span>
+                                    </li>
+                                }
+                            }
+                        </ul>
+                    </div>
+                </div>
+            }
+        </div>
+
         <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
             <h4 class="mb-3">Управление пользователями</h4>
             <table class="table table-striped align-middle">
@@ -233,4 +293,5 @@ else
         </div>
     </div>
 }
+</div>
 
