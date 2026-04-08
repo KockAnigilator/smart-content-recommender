@@ -1,0 +1,236 @@
+@model SmartContentRecommender.WebClient.Models.HomeIndexViewModel
+@{
+    ViewData["Title"] = "Smart Content Recommender (Web)";
+}
+
+<div class="mb-3">
+    @if (Model.ApiOnline)
+    {
+        <div class="alert alert-success py-2 mb-2">API: online</div>
+    }
+    else
+    {
+        <div class="alert alert-danger py-2 mb-2">API: offline (проверьте запуск WebAPI)</div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.Error))
+    {
+        <div class="alert alert-danger py-2 mb-2">@Model.Error</div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.Info))
+    {
+        <div class="alert alert-info py-2 mb-2">@Model.Info</div>
+    }
+</div>
+}
+@if (!Model.IsAuthenticated)
+{
+    <ul class="nav nav-tabs" id="authTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab" aria-controls="login" aria-selected="true">Вход</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#register" type="button" role="tab" aria-controls="register" aria-selected="false">Регистрация</button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 p-3" id="authTabsContent">
+        <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
+            <h4 class="mb-3">Вход</h4>
+            <form method="post" asp-controller="Account" asp-action="Login">
+                @Html.AntiForgeryToken()
+                <div class="mb-2">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" type="email" name="Email" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input class="form-control" type="password" name="Password" required />
+                </div>
+                <button class="btn btn-primary" type="submit">Войти</button>
+            </form>
+
+            <div class="mt-3 small text-muted">
+                Демо пользователи (seed в Development):
+                <div>admin@local / Admin123!</div>
+                <div>user1@local / User123!</div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
+            <h4 class="mb-3">Регистрация</h4>
+            <form method="post" asp-controller="Account" asp-action="Register">
+                @Html.AntiForgeryToken()
+                <div class="mb-2">
+                    <label class="form-label">Email</label>
+                    <input class="form-control" type="email" name="Email" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input class="form-control" type="password" name="Password" required />
+                </div>
+                <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
+            </form>
+        </div>
+    </div>
+}
+else
+{
+    <div class="mb-2">
+        <div><b>Вы в системе.</b> Роль: <span class="fw-semibold">@Model.Role</span></div>
+        <div class="mt-2">
+            <form method="post" asp-controller="Account" asp-action="Logout" class="d-inline">
+                @Html.AntiForgeryToken()
+                <button class="btn btn-outline-secondary btn-sm" type="submit">Выйти</button>
+            </form>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" id="mainTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="true">Контент</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="recommend-tab" data-bs-toggle="tab" data-bs-target="#recommend" type="button" role="tab" aria-controls="recommend" aria-selected="false">Рекомендации</button>
+        </li>
+
+        @if (Model.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab" aria-controls="admin" aria-selected="false">Админ: Пользователи</button>
+            </li>
+        }
+    </ul>
+
+    <div class="tab-content border border-top-0 p-3" id="mainTabsContent">
+        <div class="tab-pane fade show active" id="content" role="tabpanel" aria-labelledby="content-tab">
+            <h4 class="mb-3">Контент</h4>
+            <table class="table table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Категория</th>
+                    <th>URL</th>
+                    <th style="width: 240px;">Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Contents)
+                {
+                    <tr>
+                        <td>@item.Title</td>
+                        <td>@item.CategoryName</td>
+                        <td style="word-break: break-word;">@item.Url</td>
+                        <td>
+                            <form method="post" asp-controller="Home" asp-action="LogAction" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="contentId" value="@item.Id" />
+                                <input type="hidden" name="type" value="0" />
+                                <button class="btn btn-sm btn-outline-primary me-1" type="submit">View</button>
+                            </form>
+                            <form method="post" asp-controller="Home" asp-action="LogAction" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="contentId" value="@item.Id" />
+                                <input type="hidden" name="type" value="1" />
+                                <button class="btn btn-sm btn-outline-success me-1" type="submit">Like</button>
+                            </form>
+                            <form method="post" asp-controller="Home" asp-action="LogAction" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="contentId" value="@item.Id" />
+                                <input type="hidden" name="type" value="2" />
+                                <button class="btn btn-sm btn-outline-warning" type="submit">Click</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="tab-pane fade" id="recommend" role="tabpanel" aria-labelledby="recommend-tab">
+            <h4 class="mb-3">Рекомендации</h4>
+
+            <ul class="nav nav-pills mb-3" id="recTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="popular-rec-tab" data-bs-toggle="tab" data-bs-target="#popular-rec" type="button" role="tab" aria-controls="popular-rec" aria-selected="true">Popular</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="cat-rec-tab" data-bs-toggle="tab" data-bs-target="#cat-rec" type="button" role="tab" aria-controls="cat-rec" aria-selected="false">By Categories</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="knn-rec-tab" data-bs-toggle="tab" data-bs-target="#knn-rec" type="button" role="tab" aria-controls="knn-rec" aria-selected="false">KNN</button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="popular-rec" role="tabpanel" aria-labelledby="popular-rec-tab">
+                    @await Html.PartialAsync("_RecommendationTablePartial", Model.Popular)
+                </div>
+                <div class="tab-pane fade" id="cat-rec" role="tabpanel" aria-labelledby="cat-rec-tab">
+                    @await Html.PartialAsync("_RecommendationTablePartial", Model.ByCategories)
+                </div>
+                <div class="tab-pane fade" id="knn-rec" role="tabpanel" aria-labelledby="knn-rec-tab">
+                    @await Html.PartialAsync("_RecommendationTablePartial", Model.Knn)
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
+            <h4 class="mb-3">Управление пользователями</h4>
+            <table class="table table-striped align-middle">
+                <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Роль</th>
+                    <th>Блок</th>
+                    <th style="width: 300px;">Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var u in Model.AdminUsers)
+                {
+                    <tr>
+                        <td>@u.Email</td>
+                        <td>@u.Role</td>
+                        <td>@u.IsBlocked</td>
+                        <td>
+                            <form method="post" asp-controller="Home" asp-action="ChangeRole" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@u.Id" />
+                                <input type="hidden" name="role" value="Admin" />
+                                <button class="btn btn-sm btn-outline-dark me-1" type="submit">Admin</button>
+                            </form>
+                            <form method="post" asp-controller="Home" asp-action="ChangeRole" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@u.Id" />
+                                <input type="hidden" name="role" value="User" />
+                                <button class="btn btn-sm btn-outline-secondary me-1" type="submit">User</button>
+                            </form>
+
+                            <form method="post" asp-controller="Home" asp-action="SetBlocked" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@u.Id" />
+                                <input type="hidden" name="isBlocked" value="true" />
+                                <button class="btn btn-sm btn-outline-danger me-1" type="submit">Block</button>
+                            </form>
+                            <form method="post" asp-controller="Home" asp-action="SetBlocked" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@u.Id" />
+                                <input type="hidden" name="isBlocked" value="false" />
+                                <button class="btn btn-sm btn-outline-success me-1" type="submit">Unblock</button>
+                            </form>
+
+                            <form method="post" asp-controller="Home" asp-action="DeleteUser" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="userId" value="@u.Id" />
+                                <button class="btn btn-sm btn-outline-primary" type="submit">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+

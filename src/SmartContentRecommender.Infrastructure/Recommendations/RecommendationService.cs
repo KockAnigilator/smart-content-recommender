@@ -11,6 +11,9 @@ public class RecommendationService : IRecommendationService
 {
     private readonly ApplicationDbContext _dbContext;
 
+    private static readonly TimeSpan KnnHistoryWindow = TimeSpan.FromDays(90);
+    private const int MaxNeighbors = 5;
+
     public RecommendationService(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
@@ -146,9 +149,11 @@ public class RecommendationService : IRecommendationService
         }
 
         // Упрощенный KNN: считаем cosine similarity между текущим пользователем и остальными.
+        var cutoff = DateTime.UtcNow - KnnHistoryWindow;
+
         var otherUserIds = await _dbContext.UserActions
             .AsNoTracking()
-            .Where(a => a.UserId != userId)
+            .Where(a => a.UserId != userId && a.CreatedAtUtc >= cutoff)
             .Select(a => a.UserId)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -166,7 +171,7 @@ public class RecommendationService : IRecommendationService
 
         var nearestUsers = similarities
             .OrderByDescending(x => x.Similarity)
-            .Take(5)
+            .Take(MaxNeighbors)
             .ToList();
 
         if (nearestUsers.Count == 0)
@@ -179,7 +184,9 @@ public class RecommendationService : IRecommendationService
 
         var neighborActions = await _dbContext.UserActions
             .AsNoTracking()
-            .Where(a => nearestUserIds.Contains(a.UserId) && !seenContentIds.Contains(a.ContentId))
+            .Where(a => nearestUserIds.Contains(a.UserId)
+                        && !seenContentIds.Contains(a.ContentId)
+                        && a.CreatedAtUtc >= cutoff)
             .ToListAsync(cancellationToken);
 
         var scoredContent = neighborActions
@@ -206,6 +213,38 @@ public class RecommendationService : IRecommendationService
             .Include(c => c.Category)
             .Where(c => contentIds.Contains(c.Id))
             .ToListAsync(cancellationToken);
+        
+        // Небольшой бонус за попадание в любимые категории текущего пользователя.
+        var topCategories = await _dbContext.UserActions
+            .AsNoTracking()
+            .Where(a => a.UserId == userId)
+            .Join(
+                _dbContext.Contents.AsNoTracking(),
+                a => a.ContentId,
+                c => c.Id,
+                (a, c) => new { a, c.CategoryId })
+            .GroupBy(x => x.CategoryId)
+            .Select(g => new
+            {
+                CategoryId = g.Key,
+                Score = g.Sum(x =>
+                    x.a.Type == UserActionType.Like ? 3 :
+                    x.a.Type == UserActionType.Click ? 2 : 1)
+            })
+            .OrderByDescending(x => x.Score)
+            .Take(3)
+            .ToListAsync(cancellationToken);
+
+        var categoryBonus = topCategories.ToDictionary(x => x.CategoryId, x => x.Score);
+
+        foreach (var c in contents)
+        {
+            if (c.CategoryId != Guid.Empty &&
+                categoryBonus.TryGetValue(c.CategoryId, out var bonus))
+            {
+                scoreByContent[c.Id] += bonus * 0.1;
+            }
+        }
 
         return contents
             .Select(c => new RecommendationItemDto
@@ -242,9 +281,11 @@ public class RecommendationService : IRecommendationService
 
     private async Task<Dictionary<Guid, double>> GetUserVectorAsync(Guid userId, CancellationToken cancellationToken)
     {
+        var cutoff = DateTime.UtcNow - KnnHistoryWindow;
+
         return await _dbContext.UserActions
             .AsNoTracking()
-            .Where(a => a.UserId == userId)
+            .Where(a => a.UserId == userId && a.CreatedAtUtc >= cutoff)
             .GroupBy(a => a.ContentId)
             .Select(g => new
             {

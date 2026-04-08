@@ -1,0 +1,31 @@
+@model List<SmartContentRecommender.WebClient.Models.RecommendationItem>
+
+<table class="table table-striped align-middle mb-0">
+    <thead>
+    <tr>
+        <th>Название</th>
+        <th>Причина</th>
+        <th>Score</th>
+    </tr>
+    </thead>
+    <tbody>
+    @if (Model is null || Model.Count == 0)
+    {
+        <tr>
+            <td colspan="3" class="text-muted">Пока нет данных для отображения.</td>
+        </tr>
+    }
+    else
+    {
+        foreach (var r in Model)
+        {
+            <tr>
+                <td>@r.Title</td>
+                <td>@r.Reason</td>
+                <td>@r.Score</td>
+            </tr>
+        }
+    }
+    </tbody>
+</table>
+
