@@ -1,0 +1,29 @@
+@startuml
+title Компонентная диаграмма Smart Content Recommender
+
+actor User
+actor Admin
+
+component "WebClient (MVC)" as WebClient
+component "WpfClient (MVVM)" as WpfClient
+component "WebAPI" as WebAPI
+component "Application Layer" as App
+component "Domain Layer" as Domain
+component "Infrastructure Layer" as Infra
+database "PostgreSQL" as Db
+
+User --> WebClient
+User --> WpfClient
+Admin --> WebClient
+Admin --> WpfClient
+
+WebClient --> WebAPI
+WpfClient --> WebAPI
+WebAPI --> App
+WebAPI --> Infra
+Infra --> App
+App --> Domain
+Infra --> Domain
+Infra --> Db
+
+@enduml

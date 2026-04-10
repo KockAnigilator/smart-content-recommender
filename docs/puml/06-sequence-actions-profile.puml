@@ -1,0 +1,27 @@
+@startuml
+title Sequence: действие пользователя и профиль интересов
+
+actor User
+participant "Client" as Client
+participant "UserActionsController" as UAC
+participant "UserActionService" as UAS
+participant "AnalyticsService" as AN
+database "PostgreSQL" as Db
+
+User -> Client : Нажимает View/Like/Click
+Client -> UAC : POST /api/useractions/log
+UAC -> UAS : LogActionAsync(...)
+UAS -> Db : INSERT user_actions
+Db --> UAS : OK
+UAS --> UAC : true
+UAC --> Client : 200 OK
+
+User -> Client : Открывает профиль интересов
+Client -> UAC : GET /api/useractions/interest-profile
+UAC -> AN : GetInterestProfileAsync(userId)
+AN -> Db : SELECT actions + joins
+Db --> AN : Данные
+AN --> UAC : TopCategories/TopTags
+UAC --> Client : 200 OK
+
+@enduml

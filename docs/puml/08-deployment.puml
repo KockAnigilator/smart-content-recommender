@@ -1,0 +1,16 @@
+@startuml
+title Deployment диаграмма (демо)
+left to right direction
+
+node "ПК демонстрации" as PC {
+  artifact "Browser"
+  artifact "WPF App"
+}
+
+node "ASP.NET Core WebAPI :5078" as API
+database "PostgreSQL :5432" as DB
+
+PC --> API : HTTP/JSON
+API --> DB : EF Core / SQL
+
+@enduml

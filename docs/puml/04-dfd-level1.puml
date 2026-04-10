@@ -1,0 +1,35 @@
+@startuml
+title DFD уровень 1
+left to right direction
+
+actor "Пользователь" as U
+actor "Администратор" as A
+
+rectangle "P1 Авторизация и роли" as P1
+rectangle "P2 Каталог контента" as P2
+rectangle "P3 Логирование действий" as P3
+rectangle "P4 Рекомендательный модуль" as P4
+rectangle "P5 Админ-модуль" as P5
+
+database "D1 users" as D1
+database "D2 contents/categories/tags/content_tags" as D2
+database "D3 user_actions" as D3
+
+U --> P1
+U --> P2
+U --> P3
+U --> P4
+
+A --> P1
+A --> P5
+
+P1 <--> D1
+P2 <--> D2
+P3 --> D3
+P4 --> D2
+P4 --> D3
+P5 --> D1
+P5 --> D2
+P5 --> D3
+
+@enduml

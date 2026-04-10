@@ -1,0 +1,19 @@
+@startuml
+title Логическое микросервисное разделение
+left to right direction
+
+component "Clients (Web/WPF)" as Client
+component "AuthService" as Auth
+component "ContentService" as Content
+component "RecommendationService" as Rec
+database "PostgreSQL" as Db
+
+Client --> Auth
+Client --> Content
+Client --> Rec
+
+Auth --> Db
+Content --> Db
+Rec --> Db
+
+@enduml

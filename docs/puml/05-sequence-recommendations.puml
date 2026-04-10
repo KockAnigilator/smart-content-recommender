@@ -1,0 +1,19 @@
+@startuml
+title Sequence: получение рекомендаций KNN
+
+actor User
+participant "Client (Web/WPF)" as Client
+participant "RecommendationsController" as Api
+participant "RecommendationService" as Service
+database "PostgreSQL" as Db
+
+User -> Client : Запросить KNN рекомендации
+Client -> Api : GET /api/recommendations/knn (JWT)
+Api -> Service : GetKnnAsync(userId, limit)
+Service -> Db : Чтение user_actions + contents
+Db --> Service : История действий и контент
+Service --> Api : Список рекомендаций
+Api --> Client : 200 OK JSON
+Client --> User : Отображение выдачи
+
+@enduml

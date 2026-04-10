@@ -1,0 +1,58 @@
+@startuml
+title ER-диаграмма БД
+hide circle
+skinparam linetype ortho
+
+entity "users" as users {
+  *id : uuid <<PK>>
+  --
+  email : string
+  password_hash : string
+  role : int
+  is_blocked : bool
+  created_at_utc : datetime
+}
+
+entity "categories" as categories {
+  *id : uuid <<PK>>
+  --
+  name : string
+}
+
+entity "tags" as tags {
+  *id : uuid <<PK>>
+  --
+  name : string
+}
+
+entity "contents" as contents {
+  *id : uuid <<PK>>
+  --
+  title : string
+  description : string
+  url : string
+  category_id : uuid <<FK>>
+  created_at_utc : datetime
+}
+
+entity "content_tags" as content_tags {
+  *content_id : uuid <<FK>>
+  *tag_id : uuid <<FK>>
+}
+
+entity "user_actions" as user_actions {
+  *id : uuid <<PK>>
+  --
+  user_id : uuid <<FK>>
+  content_id : uuid <<FK>>
+  type : int
+  created_at_utc : datetime
+}
+
+users ||--o{ user_actions
+contents ||--o{ user_actions
+categories ||--o{ contents
+contents ||--o{ content_tags
+tags ||--o{ content_tags
+
+@enduml

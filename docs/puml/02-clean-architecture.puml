@@ -1,0 +1,34 @@
+@startuml
+title Слои Clean Architecture
+top to bottom direction
+
+package "Presentation" {
+  [WebClient]
+  [WpfClient]
+  [WebAPI Controllers]
+}
+
+package "Application" {
+  [Use Cases / Interfaces / DTO]
+}
+
+package "Domain" {
+  [Entities / Enums]
+}
+
+package "Infrastructure" {
+  [EF Core DbContext]
+  [Service Implementations]
+  [Auth/JWT/RateLimiter]
+}
+
+[WebClient] --> [WebAPI Controllers]
+[WpfClient] --> [WebAPI Controllers]
+[WebAPI Controllers] --> [Use Cases / Interfaces / DTO]
+[Service Implementations] --> [Use Cases / Interfaces / DTO]
+[Use Cases / Interfaces / DTO] --> [Entities / Enums]
+[Service Implementations] --> [Entities / Enums]
+[Service Implementations] --> [EF Core DbContext]
+[Auth/JWT/RateLimiter] --> [WebAPI Controllers]
+
+@enduml

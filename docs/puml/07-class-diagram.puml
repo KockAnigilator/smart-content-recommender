@@ -1,0 +1,78 @@
+@startuml
+title UML диаграмма классов (упрощенная)
+
+class User {
+  +Guid Id
+  +string Email
+  +string PasswordHash
+  +UserRole Role
+  +bool IsBlocked
+  +DateTime CreatedAtUtc
+}
+
+class Content {
+  +Guid Id
+  +string Title
+  +string Description
+  +string Url
+  +Guid CategoryId
+  +DateTime CreatedAtUtc
+}
+
+class Category {
+  +Guid Id
+  +string Name
+}
+
+class Tag {
+  +Guid Id
+  +string Name
+}
+
+class ContentTag {
+  +Guid ContentId
+  +Guid TagId
+}
+
+class UserAction {
+  +Guid Id
+  +Guid UserId
+  +Guid ContentId
+  +UserActionType Type
+  +DateTime CreatedAtUtc
+}
+
+interface IRecommendationService {
+  +GetPopularAsync(limit)
+  +GetByCategoriesAsync(userId, limit)
+  +GetKnnAsync(userId, limit)
+}
+
+class RecommendationService {
+  +GetPopularAsync(limit)
+  +GetByCategoriesAsync(userId, limit)
+  +GetKnnAsync(userId, limit)
+}
+
+interface IAnalyticsService {
+  +GetInterestProfileAsync(userId, top)
+  +ExplainRecommendationsAsync(userId, algorithm, limit)
+  +BuildDefenseReportAsync(from, to, topUsers)
+}
+
+class AnalyticsService {
+  +GetInterestProfileAsync(...)
+  +ExplainRecommendationsAsync(...)
+  +BuildDefenseReportAsync(...)
+}
+
+IRecommendationService <|.. RecommendationService
+IAnalyticsService <|.. AnalyticsService
+
+Category "1" --> "many" Content
+Content "1" --> "many" UserAction
+User "1" --> "many" UserAction
+Content "1" --> "many" ContentTag
+Tag "1" --> "many" ContentTag
+
+@enduml
