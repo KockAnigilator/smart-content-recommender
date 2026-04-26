@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using System.Windows.Media;
 
 namespace SmartContentRecommender.WpfClient.Models;
 
@@ -159,5 +160,13 @@ public class RecommendationMetricsItem
     public double PrecisionAtK { get; set; }
     public double RecallAtK { get; set; }
     public double NdcgAtK { get; set; }
+}
+
+public class ChartBarItem
+{
+    public string Label { get; set; } = string.Empty;
+    public double Value { get; set; }
+    public double Percent { get; set; }
+    public Brush Brush { get; set; } = Brushes.SteelBlue;
 }
 

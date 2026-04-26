@@ -20,6 +20,14 @@
         <Style TargetType="Button">
             <Setter Property="Padding" Value="12,6" />
             <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Background" Value="#EAF1FB" />
+            <Setter Property="BorderBrush" Value="#BFD1EA" />
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="RowBackground" Value="White" />
+            <Setter Property="AlternatingRowBackground" Value="#F8FBFF" />
+            <Setter Property="GridLinesVisibility" Value="Horizontal" />
+            <Setter Property="HeadersVisibility" Value="Column" />
         </Style>
     </Window.Resources>
     <Grid Margin="14">
@@ -65,6 +73,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
                         <TextBlock Text="Авторизация" FontSize="20" FontWeight="SemiBold" Margin="0,0,0,14" />
@@ -79,6 +88,14 @@
                             <Button Content="Вход" Command="{Binding LoginCommand}" />
                             <Button Content="Выход" Command="{Binding LogoutCommand}" />
                         </StackPanel>
+
+                        <Border Grid.Row="4" Margin="0,12,0,0" Padding="10" Background="#F8FAFD" BorderBrush="#DDE3EA" BorderThickness="1" CornerRadius="6">
+                            <StackPanel>
+                                <TextBlock FontWeight="SemiBold" Text="Демо-доступы:" />
+                                <TextBlock Margin="0,4,0,0" Text="Admin: admin@local / Admin123!" />
+                                <TextBlock Text="User: user1@local / User123!" />
+                            </StackPanel>
+                        </Border>
                     </Grid>
                 </Border>
             </TabItem>
@@ -94,9 +111,9 @@
                         <DockPanel>
                             <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
                                 <Button Content="Обновить контент" Command="{Binding LoadContentCommand}" />
-                                <Button Content="View" Command="{Binding LogViewCommand}" />
-                                <Button Content="Like" Command="{Binding LogLikeCommand}" />
-                                <Button Content="Click" Command="{Binding LogClickCommand}" />
+                                <Button Content="Просмотр" Command="{Binding LogViewCommand}" />
+                                <Button Content="Лайк" Command="{Binding LogLikeCommand}" />
+                                <Button Content="Клик" Command="{Binding LogClickCommand}" />
                             </StackPanel>
 
                             <DataGrid ItemsSource="{Binding ContentItems}" SelectedItem="{Binding SelectedContent}" AutoGenerateColumns="False" IsReadOnly="True">
@@ -117,7 +134,7 @@
                                         <Button Content="Popular" Command="{Binding LoadPopularCommand}" />
                                         <Button Content="By Categories" Command="{Binding LoadByCategoriesCommand}" />
                                         <Button Content="KNN" Command="{Binding LoadKnnCommand}" />
-                                        <Button Content="Explain KNN" Command="{Binding LoadExplainCommand}" />
+                                        <Button Content="Объяснить KNN" Command="{Binding LoadExplainCommand}" />
                                         <Button Content="Профиль интересов" Command="{Binding LoadInterestProfileCommand}" />
                                         <Button Content="Сгенерировать демо-историю (Dev)"
                                                 Visibility="{Binding ShowDemoHistoryButton, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -166,6 +183,83 @@
                                 </DockPanel>
                             </TabItem>
 
+                            <TabItem Header="Графики и аналитика" Visibility="{Binding IsAuthorized, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <DockPanel Margin="8">
+                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                        <Button Content="Обновить графики" Command="{Binding LoadDesktopDashboardCommand}" />
+                                        <TextBlock VerticalAlignment="Center" Foreground="Gray" Text="{Binding DashboardSummary}" />
+                                    </StackPanel>
+
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="*" />
+                                        </Grid.RowDefinitions>
+
+                                        <GroupBox Header="Топ категорий (график)" Grid.Row="0">
+                                            <ItemsControl ItemsSource="{Binding InterestCategoryBars}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,0,0,6">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="2*" />
+                                                                <ColumnDefinition Width="4*" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Label}" />
+                                                            <ProgressBar Grid.Column="1" Height="16" Maximum="100" Value="{Binding Percent}" />
+                                                            <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="{Binding Value, StringFormat=F2}" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </GroupBox>
+
+                                        <GroupBox Header="Топ тегов (график)" Grid.Row="1">
+                                            <ItemsControl ItemsSource="{Binding InterestTagBars}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,0,0,6">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="2*" />
+                                                                <ColumnDefinition Width="4*" />
+                                                                <ColumnDefinition Width="*" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Label}" />
+                                                            <ProgressBar Grid.Column="1" Height="16" Maximum="100" Value="{Binding Percent}" />
+                                                            <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="{Binding Value, StringFormat=F2}" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </GroupBox>
+
+                                        <GroupBox Header="Сравнение алгоритмов по NDCG (Admin)" Grid.Row="2">
+                                            <StackPanel>
+                                                <TextBlock Margin="0,0,0,6" Foreground="Gray" Text="{Binding AlgorithmComparisonStatus}" />
+                                                <ItemsControl ItemsSource="{Binding AlgorithmNdcgBars}">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,0,0,6">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="2*" />
+                                                                    <ColumnDefinition Width="4*" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Label}" />
+                                                                <ProgressBar Grid.Column="1" Height="16" Maximum="100" Value="{Binding Percent}" Foreground="{Binding Brush}" />
+                                                                <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="{Binding Value, StringFormat=F3}" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </GroupBox>
+                                    </Grid>
+                                </DockPanel>
+                            </TabItem>
+
                             <TabItem Header="Админ: Пользователи" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <DockPanel Margin="8">
                                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
@@ -175,7 +269,7 @@
                                         <Button Content="Блок" Command="{Binding BlockUserCommand}" />
                                         <Button Content="Разблок" Command="{Binding UnblockUserCommand}" />
                                         <Button Content="Удалить" Command="{Binding DeleteUserCommand}" />
-                                        <Button Content="Metrics KNN" Command="{Binding LoadMetricsCommand}" />
+                                        <Button Content="Метрики KNN" Command="{Binding LoadMetricsCommand}" />
                                         <Button Content="Экспорт CSV" Command="{Binding ExportCsvCommand}" />
                                         <Button Content="Экспорт PDF" Command="{Binding ExportPdfCommand}" />
                                     </StackPanel>

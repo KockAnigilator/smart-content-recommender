@@ -31,6 +31,8 @@ public class MainViewModel : ObservableObject
     private string _contentDescription = string.Empty;
     private string _contentTagIdsCsv = string.Empty;
     private bool _showDemoHistoryButton;
+    private string _dashboardSummary = "Откройте дашборд и нажмите 'Обновить'.";
+    private string _algorithmComparisonStatus = "Сравнение алгоритмов не загружено.";
 
     public MainViewModel()
     {
@@ -64,6 +66,7 @@ public class MainViewModel : ObservableObject
         DeleteContentCommand = new RelayCommand(async () => await DeleteContentAsync(), () => IsAdmin && SelectedContent is not null && !IsBusy);
         LoadDbViewerCommand = new RelayCommand(async () => await LoadDbViewerAsync(), () => IsAdmin && !IsBusy);
         GenerateDemoHistoryCommand = new RelayCommand(async () => await GenerateDemoHistoryAsync(), () => IsAuthorized && ShowDemoHistoryButton && !IsBusy);
+        LoadDesktopDashboardCommand = new RelayCommand(async () => await LoadDesktopDashboardAsync(), () => IsAuthorized && !IsBusy);
         CheckApiCommand = new RelayCommand(async () => await UpdateApiStatusAsync(), () => !IsBusy);
 
         _ = UpdateApiStatusAsync();
@@ -137,6 +140,9 @@ public class MainViewModel : ObservableObject
     public ObservableCollection<TagItem> DbTags { get; } = [];
     public ObservableCollection<DbContentRow> DbContents { get; } = [];
     public ObservableCollection<DbActionRow> DbActions { get; } = [];
+    public ObservableCollection<ChartBarItem> InterestCategoryBars { get; } = [];
+    public ObservableCollection<ChartBarItem> InterestTagBars { get; } = [];
+    public ObservableCollection<ChartBarItem> AlgorithmNdcgBars { get; } = [];
 
     public bool IsBusy
     {
@@ -249,6 +255,18 @@ public class MainViewModel : ObservableObject
         }
     }
 
+    public string DashboardSummary
+    {
+        get => _dashboardSummary;
+        set => SetProperty(ref _dashboardSummary, value);
+    }
+
+    public string AlgorithmComparisonStatus
+    {
+        get => _algorithmComparisonStatus;
+        set => SetProperty(ref _algorithmComparisonStatus, value);
+    }
+
     public RelayCommand RegisterCommand { get; }
     public RelayCommand LoginCommand { get; }
     public RelayCommand LogoutCommand { get; }
@@ -276,9 +294,13 @@ public class MainViewModel : ObservableObject
     public RelayCommand DeleteContentCommand { get; }
     public RelayCommand LoadDbViewerCommand { get; }
     public RelayCommand GenerateDemoHistoryCommand { get; }
+    public RelayCommand LoadDesktopDashboardCommand { get; }
     public RelayCommand CheckApiCommand { get; }
 
-    public bool IsAdmin => CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+    public bool IsAdmin =>
+        CurrentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+        CurrentRole.Equals("Админ", StringComparison.OrdinalIgnoreCase) ||
+        CurrentRole == "1";
 
     private async Task RegisterAsync()
     {
@@ -320,6 +342,7 @@ public class MainViewModel : ObservableObject
             Status = $"Авторизация успешна. Роль: {CurrentRole}";
             await LoadContentAsync();
             await LoadPopularAsync();
+            await LoadDesktopDashboardAsync();
             if (IsAdmin)
             {
                 await LoadAdminDictionariesAsync();
@@ -344,6 +367,7 @@ public class MainViewModel : ObservableObject
                 await LoadInterestProfileAsync();
                 await LoadExplainAsync();
                 await LoadKnnAsync();
+                await LoadDesktopDashboardAsync();
             }
         });
     }
@@ -401,7 +425,9 @@ public class MainViewModel : ObservableObject
         {
             var items = await _apiClient.GetByCategoriesAsync();
             ReplaceItems(RecommendationItems, items);
-            Status = $"Рекомендации по категориям: {items.Count}";
+            Status = items.Count == 0
+                ? "By Categories: пока нет данных. Сделайте несколько действий или сгенерируйте демо-историю."
+                : $"Рекомендации по категориям: {items.Count}";
             await UpdateApiStatusAsync();
         });
     }
@@ -412,7 +438,9 @@ public class MainViewModel : ObservableObject
         {
             var items = await _apiClient.GetKnnAsync();
             ReplaceItems(RecommendationItems, items);
-            Status = $"KNN рекомендации: {items.Count}";
+            Status = items.Count == 0
+                ? "KNN: пока нет данных для персонализации. Сделайте действия View/Like/Click."
+                : $"KNN рекомендации: {items.Count}";
             await UpdateApiStatusAsync();
         });
     }
@@ -423,7 +451,9 @@ public class MainViewModel : ObservableObject
         {
             var items = await _apiClient.GetExplainAsync("knn", 10);
             ReplaceItems(ExplainItems, items);
-            Status = $"Explainability записей: {items.Count}";
+            Status = items.Count == 0
+                ? "Explain KNN: пока нет explainability данных. Накопите историю действий или сгенерируйте демо-историю."
+                : $"Explainability записей: {items.Count}";
             await UpdateApiStatusAsync();
         });
     }
@@ -435,9 +465,13 @@ public class MainViewModel : ObservableObject
             var profile = await _apiClient.GetInterestProfileAsync(5);
             ReplaceItems(InterestCategories, profile?.TopCategories ?? []);
             ReplaceItems(InterestTags, profile?.TopTags ?? []);
+            ReplaceItems(InterestCategoryBars, BuildBars(profile?.TopCategories ?? []));
+            ReplaceItems(InterestTagBars, BuildBars(profile?.TopTags ?? []));
             Status = profile is null
                 ? "Профиль интересов недоступен."
-                : $"Профиль интересов загружен. Действий: {profile.TotalActions}";
+                : profile.TotalActions == 0
+                    ? "Профиль интересов пуст. Сделайте действия или нажмите 'Сгенерировать демо-историю (Dev)'."
+                    : $"Профиль интересов загружен. Действий: {profile.TotalActions}";
             await UpdateApiStatusAsync();
         });
     }
@@ -532,11 +566,77 @@ public class MainViewModel : ObservableObject
         {
             DbOverview = await _apiClient.GetDbOverviewAsync();
             ReplaceItems(DbUsers, await _apiClient.GetDbUsersAsync());
-            ReplaceItems(DbCategories, await _apiClient.GetDbCategoriesAsync());
-            ReplaceItems(DbTags, await _apiClient.GetDbTagsAsync());
+            var dbCategories = await _apiClient.GetDbCategoriesAsync();
+            if (dbCategories.Count == 0)
+            {
+                dbCategories = await _apiClient.GetCategoriesAsync();
+            }
+            ReplaceItems(DbCategories, dbCategories);
+
+            var dbTags = await _apiClient.GetDbTagsAsync();
+            if (dbTags.Count == 0)
+            {
+                dbTags = await _apiClient.GetTagsAsync();
+            }
+            ReplaceItems(DbTags, dbTags);
             ReplaceItems(DbContents, await _apiClient.GetDbContentsAsync());
             ReplaceItems(DbActions, await _apiClient.GetDbActionsAsync());
-            Status = "DB viewer обновлён.";
+            Status = $"DB viewer: users={DbUsers.Count}, categories={DbCategories.Count}, tags={DbTags.Count}, contents={DbContents.Count}, actions={DbActions.Count}";
+        });
+    }
+
+    private async Task LoadDesktopDashboardAsync()
+    {
+        await ExecuteWithUiStateAsync(async () =>
+        {
+            var profile = await _apiClient.GetInterestProfileAsync(5);
+            ReplaceItems(InterestCategories, profile?.TopCategories ?? []);
+            ReplaceItems(InterestTags, profile?.TopTags ?? []);
+            ReplaceItems(InterestCategoryBars, BuildBars(profile?.TopCategories ?? []));
+            ReplaceItems(InterestTagBars, BuildBars(profile?.TopTags ?? []));
+
+            Guid? targetUserId = SelectedAdminUser?.Id;
+
+            if (!targetUserId.HasValue)
+            {
+                var me = await _apiClient.GetMeAsync();
+                if (Guid.TryParse(me?.UserId, out var meId))
+                {
+                    targetUserId = meId;
+                }
+            }
+
+            if (!targetUserId.HasValue && IsAdmin)
+            {
+                var users = await _apiClient.GetAdminUsersAsync();
+                targetUserId = users.FirstOrDefault()?.Id;
+            }
+
+            if (targetUserId.HasValue && targetUserId.Value != Guid.Empty && IsAdmin)
+            {
+                var popular = await _apiClient.GetAdminMetricsAsync(targetUserId.Value, "popular", 10);
+                var byCategories = await _apiClient.GetAdminMetricsAsync(targetUserId.Value, "by-categories", 10);
+                var knn = await _apiClient.GetAdminMetricsAsync(targetUserId.Value, "knn", 10);
+
+                var ndcgBars = new List<ChartBarItem>();
+                if (popular is not null) ndcgBars.Add(new ChartBarItem { Label = "Popular", Value = popular.NdcgAtK, Percent = Math.Clamp(popular.NdcgAtK * 100, 0, 100), Brush = Brushes.SteelBlue });
+                if (byCategories is not null) ndcgBars.Add(new ChartBarItem { Label = "ByCategories", Value = byCategories.NdcgAtK, Percent = Math.Clamp(byCategories.NdcgAtK * 100, 0, 100), Brush = Brushes.DarkOrange });
+                if (knn is not null) ndcgBars.Add(new ChartBarItem { Label = "KNN", Value = knn.NdcgAtK, Percent = Math.Clamp(knn.NdcgAtK * 100, 0, 100), Brush = Brushes.SeaGreen });
+                ReplaceItems(AlgorithmNdcgBars, ndcgBars);
+                AlgorithmComparisonStatus = ndcgBars.Count == 0
+                    ? "Метрики пустые для выбранного пользователя. Сгенерируйте историю и повторите."
+                    : $"Сравнение рассчитано для userId: {targetUserId.Value}";
+            }
+            else
+            {
+                AlgorithmNdcgBars.Clear();
+                AlgorithmComparisonStatus = IsAdmin
+                    ? "Не удалось определить пользователя для сравнения алгоритмов."
+                    : "Сравнение алгоритмов доступно под ролью Admin.";
+            }
+
+            DashboardSummary = $"Графики: категории={InterestCategoryBars.Count}, теги={InterestTagBars.Count}, сравнение NDCG={AlgorithmNdcgBars.Count}";
+            Status = "Графики и аналитика обновлены.";
         });
     }
 
@@ -711,7 +811,26 @@ public class MainViewModel : ObservableObject
         DeleteContentCommand.RaiseCanExecuteChanged();
         LoadDbViewerCommand.RaiseCanExecuteChanged();
         GenerateDemoHistoryCommand.RaiseCanExecuteChanged();
+        LoadDesktopDashboardCommand.RaiseCanExecuteChanged();
         CheckApiCommand.RaiseCanExecuteChanged();
+    }
+
+    private static List<ChartBarItem> BuildBars(List<InterestProfileItem> source)
+    {
+        if (source.Count == 0)
+        {
+            return [];
+        }
+
+        var max = Math.Max(1, source.Max(x => x.Score));
+        return source
+            .Select(x => new ChartBarItem
+            {
+                Label = x.Name,
+                Value = x.Score,
+                Percent = Math.Clamp((x.Score / max) * 100, 0, 100)
+            })
+            .ToList();
     }
 
 }

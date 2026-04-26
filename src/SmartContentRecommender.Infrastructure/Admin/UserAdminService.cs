@@ -24,7 +24,7 @@ public class UserAdminService : IUserAdminService
             {
                 Id = u.Id,
                 Email = u.Email,
-                Role = u.Role,
+                Role = u.Role.ToString(),
                 IsBlocked = u.IsBlocked,
                 CreatedAtUtc = u.CreatedAtUtc
             })

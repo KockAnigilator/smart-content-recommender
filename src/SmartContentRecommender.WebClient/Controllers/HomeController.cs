@@ -31,7 +31,8 @@ public class HomeController : Controller
 
         var token = _tokenStore.GetToken();
         model.IsAuthenticated = !string.IsNullOrWhiteSpace(token);
-        model.Role = _tokenStore.GetRole() ?? "Guest";
+        model.Role = NormalizeRole(_tokenStore.GetRole());
+        model.IsAdmin = IsAdminRole(model.Role);
         model.ShowDemoHistoryButton = model.IsAuthenticated && await _api.IsDevModeAsync(cancellationToken);
 
         try
@@ -50,13 +51,15 @@ public class HomeController : Controller
                 _tokenStore.Clear();
                 model.IsAuthenticated = false;
                 model.Role = "Guest";
+                model.IsAdmin = false;
                 model.ByCategories = [];
                 model.Knn = [];
                 model.AdminUsers = [];
                 return View(model);
             }
 
-            model.Role = me.Role ?? "User";
+            model.Role = NormalizeRole(me.Role);
+            model.IsAdmin = IsAdminRole(model.Role);
             _tokenStore.SetRole(model.Role);
 
             model.ByCategories = await _api.GetByCategoriesAsync(cancellationToken);
@@ -83,32 +86,11 @@ public class HomeController : Controller
                 model.Info ??= "Профиль интересов пуст. Сделайте несколько действий View/Like/Click и обновите страницу.";
             }
 
-            if (model.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            if (model.IsAdmin)
             {
                 model.AdminUsers = await _api.GetAdminUsersAsync(cancellationToken);
                 model.Categories = await _api.GetCategoriesAsync(cancellationToken);
                 model.Tags = await _api.GetTagsAsync(cancellationToken);
-                try
-                {
-                    model.DbOverview = await _api.GetAdminDbOverviewAsync(cancellationToken);
-                    model.DbUsers = await _api.GetAdminDbUsersAsync(cancellationToken);
-                    model.DbCategories = await _api.GetAdminDbCategoriesAsync(cancellationToken);
-                    model.DbTags = await _api.GetAdminDbTagsAsync(cancellationToken);
-                    model.DbContents = await _api.GetAdminDbContentsAsync(cancellationToken);
-                    model.DbActions = await _api.GetAdminDbActionsAsync(cancellationToken);
-                }
-                catch (HttpRequestException ex) when (ex.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
-                {
-                    model.Error ??= "DB viewer: нет доступа. Проверьте роль Admin.";
-                }
-                catch (HttpRequestException ex)
-                {
-                    model.Error ??= $"DB viewer: ошибка API ({(int?)ex.StatusCode ?? 0}).";
-                }
-                catch (TaskCanceledException)
-                {
-                    model.Error ??= "DB viewer: превышено время ожидания ответа API.";
-                }
                 if (model.AdminUsers.Count == 0)
                 {
                     model.Info ??= "Список пользователей пуст. Проверьте seed-данные и доступ к API admin/users.";
@@ -171,7 +153,7 @@ public class HomeController : Controller
     public async Task<IActionResult> ChangeRole(Guid userId, string role, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -193,7 +175,7 @@ public class HomeController : Controller
     public async Task<IActionResult> SetBlocked(Guid userId, bool isBlocked, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -221,7 +203,7 @@ public class HomeController : Controller
     public async Task<IActionResult> DeleteUser(Guid userId, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -243,7 +225,7 @@ public class HomeController : Controller
     public async Task<IActionResult> DownloadReportCsv(CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -262,7 +244,7 @@ public class HomeController : Controller
     public async Task<IActionResult> DownloadReportPdf(CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -281,7 +263,7 @@ public class HomeController : Controller
     public async Task<IActionResult> CreateContent(CreateContentVm vm, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -295,7 +277,7 @@ public class HomeController : Controller
     public async Task<IActionResult> UpdateContent(UpdateContentVm vm, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -309,7 +291,7 @@ public class HomeController : Controller
     public async Task<IActionResult> DeleteContent(Guid id, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
-        if (string.IsNullOrWhiteSpace(currentRole) || !currentRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (!IsAdminRole(currentRole))
         {
             return Forbid();
         }
@@ -328,5 +310,22 @@ public class HomeController : Controller
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    private static string NormalizeRole(string? role)
+    {
+        return role switch
+        {
+            "1" => "Admin",
+            "0" => "User",
+            _ when string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase) => "Admin",
+            _ when string.Equals(role, "User", StringComparison.OrdinalIgnoreCase) => "User",
+            _ => role ?? "Guest"
+        };
+    }
+
+    private static bool IsAdminRole(string? role)
+    {
+        return string.Equals(role, "Admin", StringComparison.OrdinalIgnoreCase) || role == "1";
     }
 }

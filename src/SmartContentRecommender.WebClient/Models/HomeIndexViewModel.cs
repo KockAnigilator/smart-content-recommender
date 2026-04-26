@@ -4,6 +4,7 @@ public class HomeIndexViewModel
 {
     public bool IsAuthenticated { get; set; }
     public string Role { get; set; } = "Guest";
+    public bool IsAdmin { get; set; }
 
     public string? Error { get; set; }
     public string? Info { get; set; }

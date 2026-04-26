@@ -6,7 +6,7 @@ public class UserAdminItemDto
 {
     public Guid Id { get; set; }
     public string Email { get; set; } = string.Empty;
-    public UserRole Role { get; set; }
+    public string Role { get; set; } = string.Empty;
     public bool IsBlocked { get; set; }
     public DateTime CreatedAtUtc { get; set; }
 }
