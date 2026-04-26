@@ -2,9 +2,26 @@
 @{
     ViewData["Title"] = "Smart Content Recommender (Web)";
 }
+<style>
+    .scr-panel { background:#fff; border:1px solid #e5eaf1; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+    .scr-table th { white-space:nowrap; }
+    .scr-tab-title { letter-spacing:.1px; font-weight:600; }
+    .scr-hero { background:linear-gradient(135deg,#edf3ff,#f5fbff); border:1px solid #dbe8ff; border-radius:14px; }
+</style>
 
 <div class="mx-auto" style="max-width: 980px;">
-<div class="mb-3 text-center"></div>
+<div class="scr-hero p-3 mb-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <div>
+            <div class="fw-semibold">Система рекомендаций контента</div>
+            <div class="text-muted small">Действия пользователя (View / Like / Click) формируют персональную выдачу.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-sm btn-outline-primary" asp-controller="Home" asp-action="Help">Открыть справку</a>
+            <a class="btn btn-sm btn-outline-secondary" asp-controller="Home" asp-action="Index" asp-route-activeTab="recommend" asp-route-activeRecTab="knn-rec">Сразу к KNN</a>
+        </div>
+    </div>
+</div>
 @if (!Model.IsAuthenticated)
 {
     <ul class="nav nav-tabs justify-content-center" id="authTabs" role="tablist">
@@ -16,9 +33,9 @@
         </li>
     </ul>
 
-    <div class="tab-content border border-top-0 p-4" id="authTabsContent">
+    <div class="tab-content border border-top-0 p-4 scr-panel" id="authTabsContent">
         <div class="tab-pane fade show active" id="login" role="tabpanel" aria-labelledby="login-tab">
-            <h4 class="mb-3 text-center">Вход</h4>
+            <h4 class="mb-3 text-center scr-tab-title">Вход</h4>
             <form method="post" asp-controller="Account" asp-action="Login">
                 @Html.AntiForgeryToken()
                 <div class="mb-2">
@@ -42,7 +59,7 @@
         </div>
 
         <div class="tab-pane fade" id="register" role="tabpanel" aria-labelledby="register-tab">
-            <h4 class="mb-3 text-center">Регистрация</h4>
+            <h4 class="mb-3 text-center scr-tab-title">Регистрация</h4>
             <form method="post" asp-controller="Account" asp-action="Register">
                 @Html.AntiForgeryToken()
                 <div class="mb-2">
@@ -77,27 +94,27 @@ else
 
     <ul class="nav nav-tabs justify-content-center" id="mainTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="true">Контент</button>
+            <button class="nav-link @(Model.ActiveTab == "content" ? "active" : "")" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab" aria-controls="content" aria-selected="@(Model.ActiveTab == "content")">Контент</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="recommend-tab" data-bs-toggle="tab" data-bs-target="#recommend" type="button" role="tab" aria-controls="recommend" aria-selected="false">Рекомендации</button>
+            <button class="nav-link @(Model.ActiveTab == "recommend" ? "active" : "")" id="recommend-tab" data-bs-toggle="tab" data-bs-target="#recommend" type="button" role="tab" aria-controls="recommend" aria-selected="@(Model.ActiveTab == "recommend")">Рекомендации</button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Профиль интересов</button>
+            <button class="nav-link @(Model.ActiveTab == "profile" ? "active" : "")" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="@(Model.ActiveTab == "profile")">Профиль интересов</button>
         </li>
 
         @if (Model.IsAdmin)
         {
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab" aria-controls="admin" aria-selected="false">Админ: Пользователи</button>
+                <button class="nav-link @(Model.ActiveTab == "admin" ? "active" : "")" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab" aria-controls="admin" aria-selected="@(Model.ActiveTab == "admin")">Админ: Пользователи</button>
             </li>
         }
     </ul>
 
-    <div class="tab-content border border-top-0 p-3" id="mainTabsContent">
-        <div class="tab-pane fade show active" id="content" role="tabpanel" aria-labelledby="content-tab">
-            <h4 class="mb-3">Контент</h4>
-            <table class="table table-striped align-middle">
+    <div class="tab-content border border-top-0 p-3 scr-panel" id="mainTabsContent">
+        <div class="tab-pane fade @(Model.ActiveTab == "content" ? "show active" : "")" id="content" role="tabpanel" aria-labelledby="content-tab">
+            <h4 class="mb-3 scr-tab-title">Контент</h4>
+            <table class="table table-striped align-middle scr-table">
                 <thead>
                 <tr>
                     <th>Название</th>
@@ -139,29 +156,29 @@ else
             </table>
         </div>
 
-        <div class="tab-pane fade" id="recommend" role="tabpanel" aria-labelledby="recommend-tab">
-            <h4 class="mb-3">Рекомендации</h4>
+        <div class="tab-pane fade @(Model.ActiveTab == "recommend" ? "show active" : "")" id="recommend" role="tabpanel" aria-labelledby="recommend-tab">
+            <h4 class="mb-3 scr-tab-title">Рекомендации</h4>
 
             <ul class="nav nav-pills mb-3" id="recTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="popular-rec-tab" data-bs-toggle="tab" data-bs-target="#popular-rec" type="button" role="tab" aria-controls="popular-rec" aria-selected="true">Popular</button>
+                    <button class="nav-link @(Model.ActiveRecTab == "popular-rec" ? "active" : "")" id="popular-rec-tab" data-bs-toggle="tab" data-bs-target="#popular-rec" type="button" role="tab" aria-controls="popular-rec" aria-selected="@(Model.ActiveRecTab == "popular-rec")">Popular</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="cat-rec-tab" data-bs-toggle="tab" data-bs-target="#cat-rec" type="button" role="tab" aria-controls="cat-rec" aria-selected="false">By Categories</button>
+                    <button class="nav-link @(Model.ActiveRecTab == "cat-rec" ? "active" : "")" id="cat-rec-tab" data-bs-toggle="tab" data-bs-target="#cat-rec" type="button" role="tab" aria-controls="cat-rec" aria-selected="@(Model.ActiveRecTab == "cat-rec")">By Categories</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="knn-rec-tab" data-bs-toggle="tab" data-bs-target="#knn-rec" type="button" role="tab" aria-controls="knn-rec" aria-selected="false">KNN</button>
+                    <button class="nav-link @(Model.ActiveRecTab == "knn-rec" ? "active" : "")" id="knn-rec-tab" data-bs-toggle="tab" data-bs-target="#knn-rec" type="button" role="tab" aria-controls="knn-rec" aria-selected="@(Model.ActiveRecTab == "knn-rec")">KNN</button>
                 </li>
             </ul>
 
             <div class="tab-content">
-                <div class="tab-pane fade show active" id="popular-rec" role="tabpanel" aria-labelledby="popular-rec-tab">
+                <div class="tab-pane fade @(Model.ActiveRecTab == "popular-rec" ? "show active" : "")" id="popular-rec" role="tabpanel" aria-labelledby="popular-rec-tab">
                     @await Html.PartialAsync("_RecommendationTablePartial", Model.Popular)
                 </div>
-                <div class="tab-pane fade" id="cat-rec" role="tabpanel" aria-labelledby="cat-rec-tab">
+                <div class="tab-pane fade @(Model.ActiveRecTab == "cat-rec" ? "show active" : "")" id="cat-rec" role="tabpanel" aria-labelledby="cat-rec-tab">
                     @await Html.PartialAsync("_RecommendationTablePartial", Model.ByCategories)
                 </div>
-                <div class="tab-pane fade" id="knn-rec" role="tabpanel" aria-labelledby="knn-rec-tab">
+                <div class="tab-pane fade @(Model.ActiveRecTab == "knn-rec" ? "show active" : "")" id="knn-rec" role="tabpanel" aria-labelledby="knn-rec-tab">
                     @await Html.PartialAsync("_RecommendationTablePartial", Model.Knn)
                 </div>
             </div>
@@ -199,16 +216,8 @@ else
             </table>
         </div>
 
-        <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
-            <h4 class="mb-3">Персональный профиль интересов</h4>
-
-            @if (Model.ShowDemoHistoryButton)
-            {
-                <form method="post" asp-controller="Home" asp-action="GenerateDemoHistory" class="mb-3">
-                    @Html.AntiForgeryToken()
-                    <button class="btn btn-sm btn-outline-primary" type="submit">Сгенерировать демо-историю (Dev)</button>
-                </form>
-            }
+        <div class="tab-pane fade @(Model.ActiveTab == "profile" ? "show active" : "")" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+            <h4 class="mb-3 scr-tab-title">Персональный профиль интересов</h4>
 
             @if (Model.InterestProfile is null)
             {
@@ -260,8 +269,8 @@ else
             }
         </div>
 
-        <div class="tab-pane fade" id="admin" role="tabpanel" aria-labelledby="admin-tab">
-            <h4 class="mb-3">Управление пользователями</h4>
+        <div class="tab-pane fade @(Model.ActiveTab == "admin" ? "show active" : "")" id="admin" role="tabpanel" aria-labelledby="admin-tab">
+            <h4 class="mb-3 scr-tab-title">Управление пользователями</h4>
             <div class="mb-3">
                 <form method="post" asp-controller="Home" asp-action="DownloadReportCsv" class="d-inline">
                     @Html.AntiForgeryToken()
@@ -272,7 +281,7 @@ else
                     <button class="btn btn-sm btn-outline-primary" type="submit">Экспорт PDF</button>
                 </form>
             </div>
-            <table class="table table-striped align-middle">
+            <table class="table table-striped align-middle scr-table">
                 <thead>
                 <tr>
                     <th>Email</th>
@@ -369,7 +378,7 @@ else
                         </div>
                         <div class="mb-2">
                             <input class="form-control" name="TagIdsCsv" placeholder="TagIds CSV (guid,guid,...)" />
-                            <div class="form-text">Подсказка: GUID тегов можно посмотреть во вкладке “База данных”.</div>
+                            <div class="form-text">Подсказка: GUID тегов можно взять из API /api/tags (Swagger) или из desktop-клиента.</div>
                         </div>
                         <button class="btn btn-sm btn-primary" type="submit">Создать</button>
                     </form>

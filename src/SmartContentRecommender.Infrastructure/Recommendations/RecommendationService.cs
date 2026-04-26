@@ -26,8 +26,6 @@ public class RecommendationService : IRecommendationService
     {
         var safeLimit = NormalizeLimit(limit);
 
-        var seenContentIds = await GetSeenContentIdsAsync(userId, cancellationToken);
-
         // 1) Берем "интерес пользователя по категориям" из истории действий.
         var preferredCategories = await _dbContext.UserActions
             .AsNoTracking()
@@ -51,8 +49,26 @@ public class RecommendationService : IRecommendationService
 
         if (preferredCategories.Count == 0)
         {
-            // Если у пользователя нет истории — fallback на популярное.
-            return await GetPopularAsync(safeLimit, cancellationToken);
+            // Если у пользователя нет истории, отдаём "category-discovery" (не копию popular).
+            var fallbackContents = await _dbContext.Contents
+                .AsNoTracking()
+                .Include(c => c.Category)
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Take(safeLimit)
+                .ToListAsync(cancellationToken);
+
+            return fallbackContents
+                .Select(c => new RecommendationItemDto
+                {
+                    ContentId = c.Id,
+                    Title = c.Title,
+                    Description = c.Description,
+                    Url = c.Url,
+                    CategoryName = c.Category?.Name ?? string.Empty,
+                    Score = 1,
+                    Reason = "By Categories: стартовая выдача по категориям"
+                })
+                .ToList();
         }
 
         var categoryScores = preferredCategories.ToDictionary(x => x.CategoryId, x => (double)x.Score);
@@ -61,7 +77,7 @@ public class RecommendationService : IRecommendationService
         var candidates = await _dbContext.Contents
             .AsNoTracking()
             .Include(c => c.Category)
-            .Where(c => targetCategoryIds.Contains(c.CategoryId) && !seenContentIds.Contains(c.Id))
+            .Where(c => targetCategoryIds.Contains(c.CategoryId))
             .OrderByDescending(c => c.CreatedAtUtc)
             .Take(500)
             .ToListAsync(cancellationToken);
@@ -74,11 +90,11 @@ public class RecommendationService : IRecommendationService
                 Description = c.Description,
                 Url = c.Url,
                 CategoryName = c.Category?.Name ?? string.Empty,
-                Score = categoryScores.GetValueOrDefault(c.CategoryId, 0),
+                Score = categoryScores.GetValueOrDefault(c.CategoryId, 0) + GetRecencyBonus(c.CreatedAtUtc),
                 Reason = "Рекомендация по интересующим категориям"
             })
             .OrderByDescending(x => x.Score)
-            .ThenByDescending(x => x.ContentId)
+            .ThenBy(x => x.Title)
             .Take(safeLimit)
             .ToList();
     }
@@ -145,7 +161,25 @@ public class RecommendationService : IRecommendationService
         var currentVector = await GetUserVectorAsync(userId, cancellationToken);
         if (currentVector.Count == 0)
         {
-            return await GetPopularAsync(safeLimit, cancellationToken);
+            var fallbackRecent = await _dbContext.Contents
+                .AsNoTracking()
+                .Include(c => c.Category)
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Take(safeLimit)
+                .ToListAsync(cancellationToken);
+
+            return fallbackRecent
+                .Select(c => new RecommendationItemDto
+                {
+                    ContentId = c.Id,
+                    Title = c.Title,
+                    Description = c.Description,
+                    Url = c.Url,
+                    CategoryName = c.Category?.Name ?? string.Empty,
+                    Score = 1 + GetRecencyBonus(c.CreatedAtUtc),
+                    Reason = "KNN: недостаточно персональных данных, показан свежий контент"
+                })
+                .ToList();
         }
 
         // Упрощенный KNN: считаем cosine similarity между текущим пользователем и остальными.
@@ -176,7 +210,25 @@ public class RecommendationService : IRecommendationService
 
         if (nearestUsers.Count == 0)
         {
-            return await GetPopularAsync(safeLimit, cancellationToken);
+            var fallbackRecent = await _dbContext.Contents
+                .AsNoTracking()
+                .Include(c => c.Category)
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Take(safeLimit)
+                .ToListAsync(cancellationToken);
+
+            return fallbackRecent
+                .Select(c => new RecommendationItemDto
+                {
+                    ContentId = c.Id,
+                    Title = c.Title,
+                    Description = c.Description,
+                    Url = c.Url,
+                    CategoryName = c.Category?.Name ?? string.Empty,
+                    Score = 1 + GetRecencyBonus(c.CreatedAtUtc),
+                    Reason = "KNN: пока нет похожих пользователей, показан свежий контент"
+                })
+                .ToList();
         }
 
         var nearestUserIds = nearestUsers.Select(x => x.UserId).ToHashSet();
@@ -202,7 +254,36 @@ public class RecommendationService : IRecommendationService
 
         if (scoredContent.Count == 0)
         {
-            return await GetPopularAsync(safeLimit, cancellationToken);
+            var fallbackRecent = await _dbContext.Contents
+                .AsNoTracking()
+                .Include(c => c.Category)
+                .Where(c => !seenContentIds.Contains(c.Id))
+                .OrderByDescending(c => c.CreatedAtUtc)
+                .Take(safeLimit)
+                .ToListAsync(cancellationToken);
+
+            if (fallbackRecent.Count == 0)
+            {
+                fallbackRecent = await _dbContext.Contents
+                    .AsNoTracking()
+                    .Include(c => c.Category)
+                    .OrderByDescending(c => c.CreatedAtUtc)
+                    .Take(safeLimit)
+                    .ToListAsync(cancellationToken);
+            }
+
+            return fallbackRecent
+                .Select(c => new RecommendationItemDto
+                {
+                    ContentId = c.Id,
+                    Title = c.Title,
+                    Description = c.Description,
+                    Url = c.Url,
+                    CategoryName = c.Category?.Name ?? string.Empty,
+                    Score = 1 + GetRecencyBonus(c.CreatedAtUtc),
+                    Reason = "KNN: для текущей истории нет новых кандидатов, показан свежий контент"
+                })
+                .ToList();
         }
 
         var scoreByContent = scoredContent.ToDictionary(x => x.ContentId, x => x.Score);
@@ -258,6 +339,7 @@ public class RecommendationService : IRecommendationService
                 Reason = "Похоже на действия похожих пользователей (KNN)"
             })
             .OrderByDescending(x => x.Score)
+            .ThenBy(x => x.Title)
             .Take(safeLimit)
             .ToList();
     }
@@ -332,6 +414,15 @@ public class RecommendationService : IRecommendationService
             UserActionType.Like => 3,
             _ => 1
         };
+    }
+
+    private static double GetRecencyBonus(DateTime createdAtUtc)
+    {
+        var days = (DateTime.UtcNow - createdAtUtc).TotalDays;
+        if (days <= 3) return 0.5;
+        if (days <= 14) return 0.25;
+        if (days <= 30) return 0.1;
+        return 0;
     }
 }
 

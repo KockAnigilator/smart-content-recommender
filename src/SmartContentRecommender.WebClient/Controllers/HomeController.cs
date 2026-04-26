@@ -16,7 +16,12 @@ public class HomeController : Controller
         _tokenStore = tokenStore;
     }
 
-    public async Task<IActionResult> Index(Guid? metricsUserId = null, string metricsAlgorithm = "knn", CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Index(
+        Guid? metricsUserId = null,
+        string metricsAlgorithm = "knn",
+        string activeTab = "content",
+        string activeRecTab = "popular-rec",
+        CancellationToken cancellationToken = default)
     {
         var model = new HomeIndexViewModel();
         model.Error = TempData["Error"] as string;
@@ -33,7 +38,9 @@ public class HomeController : Controller
         model.IsAuthenticated = !string.IsNullOrWhiteSpace(token);
         model.Role = NormalizeRole(_tokenStore.GetRole());
         model.IsAdmin = IsAdminRole(model.Role);
-        model.ShowDemoHistoryButton = model.IsAuthenticated && await _api.IsDevModeAsync(cancellationToken);
+        model.ShowDemoHistoryButton = false;
+        model.ActiveTab = activeTab;
+        model.ActiveRecTab = activeRecTab;
 
         try
         {
@@ -133,23 +140,6 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> GenerateDemoHistory(CancellationToken cancellationToken)
-    {
-        var token = _tokenStore.GetToken();
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            TempData["Error"] = "Нужно войти, чтобы сгенерировать демо-историю.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        var ok = await _api.GenerateDemoHistoryAsync(cancellationToken);
-        TempData[ok ? "Info" : "Error"] = ok
-            ? "Демо-история сгенерирована. Обновите профиль/рекомендации."
-            : "Не удалось сгенерировать демо-историю.";
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpPost]
     public async Task<IActionResult> ChangeRole(Guid userId, string role, CancellationToken cancellationToken)
     {
         var currentRole = _tokenStore.GetRole();
@@ -168,7 +158,7 @@ public class HomeController : Controller
             TempData["Info"] = "Роль пользователя обновлена.";
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { activeTab = "admin" });
     }
 
     [HttpPost]
@@ -190,13 +180,13 @@ public class HomeController : Controller
             TempData["Info"] = "Статус блокировки обновлён.";
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { activeTab = "admin" });
     }
 
     [HttpPost]
     public IActionResult ShowMetrics(Guid userId, string algorithm = "knn")
     {
-        return RedirectToAction(nameof(Index), new { metricsUserId = userId, metricsAlgorithm = algorithm });
+        return RedirectToAction(nameof(Index), new { metricsUserId = userId, metricsAlgorithm = algorithm, activeTab = "admin" });
     }
 
     [HttpPost]
@@ -218,7 +208,7 @@ public class HomeController : Controller
             TempData["Info"] = "Пользователь удалён.";
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { activeTab = "admin" });
     }
 
     [HttpPost]
@@ -234,7 +224,7 @@ public class HomeController : Controller
         if (file is null)
         {
             TempData["Error"] = "Не удалось выгрузить CSV отчет.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { activeTab = "admin" });
         }
 
         return File(file.Value.Bytes, file.Value.ContentType, file.Value.FileName);
@@ -253,7 +243,7 @@ public class HomeController : Controller
         if (file is null)
         {
             TempData["Error"] = "Не удалось выгрузить PDF отчет.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { activeTab = "admin" });
         }
 
         return File(file.Value.Bytes, file.Value.ContentType, file.Value.FileName);
@@ -270,7 +260,7 @@ public class HomeController : Controller
 
         var ok = await _api.CreateContentAsync(vm, cancellationToken);
         TempData[ok ? "Info" : "Error"] = ok ? "Контент создан." : "Не удалось создать контент.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { activeTab = "admin" });
     }
 
     [HttpPost]
@@ -284,7 +274,7 @@ public class HomeController : Controller
 
         var ok = await _api.UpdateContentAsync(vm, cancellationToken);
         TempData[ok ? "Info" : "Error"] = ok ? "Контент обновлён." : "Не удалось обновить контент.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { activeTab = "admin" });
     }
 
     [HttpPost]
@@ -298,12 +288,12 @@ public class HomeController : Controller
 
         var ok = await _api.DeleteContentAsync(id, cancellationToken);
         TempData[ok ? "Info" : "Error"] = ok ? "Контент удалён." : "Не удалось удалить контент.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Index), new { activeTab = "admin" });
     }
 
-    public IActionResult Privacy()
+    public IActionResult Help()
     {
-        return View();
+        return View("Help");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

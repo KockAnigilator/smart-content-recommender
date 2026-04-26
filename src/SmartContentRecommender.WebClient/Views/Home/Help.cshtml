@@ -1,0 +1,110 @@
+@{
+    ViewData["Title"] = "Справка";
+}
+
+<style>
+    .help-card { background:#fff; border:1px solid #e5eaf1; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+    .help-badge { font-size:.85rem; }
+    .help-cta { background: linear-gradient(135deg, #eef4ff, #f3fbff); border:1px solid #d7e6ff; border-radius:12px; }
+</style>
+
+<div class="container py-3">
+    <div class="help-card p-4 mb-3">
+        <h3 class="mb-2">Справка по приложению</h3>
+        <p class="text-muted mb-0">
+            Это система рекомендаций контента на основе действий пользователя:
+            <span class="badge text-bg-primary help-badge">View</span>
+            <span class="badge text-bg-success help-badge">Like</span>
+            <span class="badge text-bg-warning help-badge">Click</span>.
+        </p>
+    </div>
+
+    <div class="help-cta p-3 mb-3">
+        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+            <div>
+                <div class="fw-semibold">Быстрые сценарии</div>
+                <div class="text-muted small">Нажмите кнопку и сразу перейдите в нужный режим работы.</div>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-primary" asp-controller="Home" asp-action="Index" asp-route-activeTab="content">Быстрый старт</a>
+                <a class="btn btn-outline-primary" asp-controller="Home" asp-action="Index" asp-route-activeTab="recommend" asp-route-activeRecTab="popular-rec">Проверка алгоритмов</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion" id="helpAccordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="h1">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c1" aria-expanded="true" aria-controls="c1">
+                    1) Как начать пользоваться
+                </button>
+            </h2>
+            <div id="c1" class="accordion-collapse collapse show" aria-labelledby="h1" data-bs-parent="#helpAccordion">
+                <div class="accordion-body">
+                    <ol class="mb-0">
+                        <li>Войдите в систему (или зарегистрируйтесь).</li>
+                        <li>Откройте вкладку <b>Контент</b> и выполните несколько действий View/Like/Click.</li>
+                        <li>Перейдите во вкладку <b>Рекомендации</b> и сравните Popular / By Categories / KNN.</li>
+                        <li>Откройте <b>Профиль интересов</b>, чтобы увидеть топ категорий и тегов.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="h2">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2" aria-expanded="false" aria-controls="c2">
+                    2) Что означают алгоритмы
+                </button>
+            </h2>
+            <div id="c2" class="accordion-collapse collapse" aria-labelledby="h2" data-bs-parent="#helpAccordion">
+                <div class="accordion-body">
+                    <ul class="mb-0">
+                        <li><b>Popular</b> — контент с наибольшей общей активностью всех пользователей.</li>
+                        <li><b>By Categories</b> — контент из категорий, где у текущего пользователя больше действий.</li>
+                        <li><b>KNN</b> — персональная выдача по похожим пользователям и их интересам.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="h3">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c3" aria-expanded="false" aria-controls="c3">
+                    3) Как понять результаты алгоритмов
+                </button>
+            </h2>
+            <div id="c3" class="accordion-collapse collapse" aria-labelledby="h3" data-bs-parent="#helpAccordion">
+                <div class="accordion-body">
+                    <ul class="mb-2">
+                        <li>Смотрите поле <b>Reason</b> в таблице рекомендаций.</li>
+                        <li>Во вкладке <b>Explainability (KNN)</b> оценивайте вклад факторов Popularity/Category/KNN.</li>
+                        <li>Чем больше у пользователя действий, тем точнее <b>KNN</b> и профиль интересов.</li>
+                    </ul>
+                    <div class="alert alert-info mb-0">
+                        Если рекомендации кажутся похожими, сделайте больше действий в разных категориях —
+                        после этого алгоритмы расходятся заметно сильнее.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="h4">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c4" aria-expanded="false" aria-controls="c4">
+                    4) Админ-функции
+                </button>
+            </h2>
+            <div id="c4" class="accordion-collapse collapse" aria-labelledby="h4" data-bs-parent="#helpAccordion">
+                <div class="accordion-body">
+                    <ul class="mb-0">
+                        <li>Управление пользователями: роль, блокировка, удаление.</li>
+                        <li>Метрики рекомендаций: Precision@K, Recall@K, NDCG@K.</li>
+                        <li>Управление контентом: создание, обновление, удаление.</li>
+                        <li>Экспорт отчётов в CSV/PDF.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

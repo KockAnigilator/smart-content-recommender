@@ -19,6 +19,11 @@ html {
 
 body {
   margin-bottom: 60px;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(120, 168, 255, 0.16), transparent 35%),
+    radial-gradient(circle at 90% 0%, rgba(79, 215, 189, 0.14), transparent 28%),
+    #f6f8fc;
+  color: #1f2a37;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -28,4 +33,31 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+.navbar {
+  backdrop-filter: blur(6px);
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.nav-tabs .nav-link,
+.nav-pills .nav-link {
+  border-radius: 10px !important;
+}
+
+.nav-tabs .nav-link.active,
+.nav-pills .nav-link.active {
+  background: linear-gradient(135deg, #0d6efd, #4f88ff);
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(13, 110, 253, 0.25);
+}
+
+.table {
+  border-radius: 10px;
+  overflow: hidden;
 }

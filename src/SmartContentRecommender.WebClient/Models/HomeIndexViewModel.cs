@@ -11,6 +11,8 @@ public class HomeIndexViewModel
 
     public bool ApiOnline { get; set; }
     public bool ShowDemoHistoryButton { get; set; }
+    public string ActiveTab { get; set; } = "content";
+    public string ActiveRecTab { get; set; } = "popular-rec";
 
     public List<ContentItem> Contents { get; set; } = [];
     public List<RecommendationItem> Popular { get; set; } = [];

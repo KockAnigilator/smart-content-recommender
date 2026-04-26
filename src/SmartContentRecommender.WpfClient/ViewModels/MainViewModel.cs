@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Net.Http;
+using System.Windows;
 using System.Windows.Media;
 using SmartContentRecommender.WpfClient.Infrastructure;
 using SmartContentRecommender.WpfClient.Models;
@@ -33,6 +34,10 @@ public class MainViewModel : ObservableObject
     private bool _showDemoHistoryButton;
     private string _dashboardSummary = "Откройте дашборд и нажмите 'Обновить'.";
     private string _algorithmComparisonStatus = "Сравнение алгоритмов не загружено.";
+    private string _knnDistributionStatus = "Распределение KNN не загружено.";
+    private PointCollection _knnDistributionPoints = [];
+    private string _categoryDistributionStatus = "Распределение категорий не загружено.";
+    private PointCollection _interestCategoryPoints = [];
 
     public MainViewModel()
     {
@@ -141,8 +146,7 @@ public class MainViewModel : ObservableObject
     public ObservableCollection<DbContentRow> DbContents { get; } = [];
     public ObservableCollection<DbActionRow> DbActions { get; } = [];
     public ObservableCollection<ChartBarItem> InterestCategoryBars { get; } = [];
-    public ObservableCollection<ChartBarItem> InterestTagBars { get; } = [];
-    public ObservableCollection<ChartBarItem> AlgorithmNdcgBars { get; } = [];
+    public ObservableCollection<ChartBarItem> KnnDistributionBars { get; } = [];
 
     public bool IsBusy
     {
@@ -265,6 +269,30 @@ public class MainViewModel : ObservableObject
     {
         get => _algorithmComparisonStatus;
         set => SetProperty(ref _algorithmComparisonStatus, value);
+    }
+
+    public string KnnDistributionStatus
+    {
+        get => _knnDistributionStatus;
+        set => SetProperty(ref _knnDistributionStatus, value);
+    }
+
+    public PointCollection KnnDistributionPoints
+    {
+        get => _knnDistributionPoints;
+        set => SetProperty(ref _knnDistributionPoints, value);
+    }
+
+    public string CategoryDistributionStatus
+    {
+        get => _categoryDistributionStatus;
+        set => SetProperty(ref _categoryDistributionStatus, value);
+    }
+
+    public PointCollection InterestCategoryPoints
+    {
+        get => _interestCategoryPoints;
+        set => SetProperty(ref _interestCategoryPoints, value);
     }
 
     public RelayCommand RegisterCommand { get; }
@@ -465,8 +493,19 @@ public class MainViewModel : ObservableObject
             var profile = await _apiClient.GetInterestProfileAsync(5);
             ReplaceItems(InterestCategories, profile?.TopCategories ?? []);
             ReplaceItems(InterestTags, profile?.TopTags ?? []);
-            ReplaceItems(InterestCategoryBars, BuildBars(profile?.TopCategories ?? []));
-            ReplaceItems(InterestTagBars, BuildBars(profile?.TopTags ?? []));
+            ReplaceItems(InterestCategoryBars, BuildBars(profile?.TopCategories ?? [], Brushes.DodgerBlue));
+            InterestCategoryPoints = BuildDistributionPoints(InterestCategoryBars.ToList());
+            CategoryDistributionStatus = InterestCategoryBars.Count == 0
+                ? "Нет данных категорий. Выполните действия в контенте."
+                : $"Распределение категорий построено, элементов: {InterestCategoryBars.Count}";
+
+            var knnItems = await _apiClient.GetKnnAsync();
+            var knnBars = BuildRecommendationBars(knnItems);
+            ReplaceItems(KnnDistributionBars, knnBars);
+            KnnDistributionPoints = BuildDistributionPoints(knnBars);
+            KnnDistributionStatus = knnBars.Count == 0
+                ? "Нет данных KNN. Сделайте действия View/Like/Click."
+                : $"KNN-распределение построено, элементов: {knnBars.Count}";
             Status = profile is null
                 ? "Профиль интересов недоступен."
                 : profile.TotalActions == 0
@@ -592,50 +631,21 @@ public class MainViewModel : ObservableObject
             var profile = await _apiClient.GetInterestProfileAsync(5);
             ReplaceItems(InterestCategories, profile?.TopCategories ?? []);
             ReplaceItems(InterestTags, profile?.TopTags ?? []);
-            ReplaceItems(InterestCategoryBars, BuildBars(profile?.TopCategories ?? []));
-            ReplaceItems(InterestTagBars, BuildBars(profile?.TopTags ?? []));
+            ReplaceItems(InterestCategoryBars, BuildBars(profile?.TopCategories ?? [], Brushes.DodgerBlue));
+            InterestCategoryPoints = BuildDistributionPoints(InterestCategoryBars.ToList());
+            CategoryDistributionStatus = InterestCategoryBars.Count == 0
+                ? "Нет данных категорий. Выполните действия в контенте."
+                : $"Распределение категорий построено, элементов: {InterestCategoryBars.Count}";
 
-            Guid? targetUserId = SelectedAdminUser?.Id;
+            var knnItems = await _apiClient.GetKnnAsync();
+            var knnBars = BuildRecommendationBars(knnItems);
+            ReplaceItems(KnnDistributionBars, knnBars);
+            KnnDistributionPoints = BuildDistributionPoints(knnBars);
+            KnnDistributionStatus = knnBars.Count == 0
+                ? "Нет данных KNN. Сделайте действия View/Like/Click."
+                : $"KNN-распределение построено, элементов: {knnBars.Count}";
 
-            if (!targetUserId.HasValue)
-            {
-                var me = await _apiClient.GetMeAsync();
-                if (Guid.TryParse(me?.UserId, out var meId))
-                {
-                    targetUserId = meId;
-                }
-            }
-
-            if (!targetUserId.HasValue && IsAdmin)
-            {
-                var users = await _apiClient.GetAdminUsersAsync();
-                targetUserId = users.FirstOrDefault()?.Id;
-            }
-
-            if (targetUserId.HasValue && targetUserId.Value != Guid.Empty && IsAdmin)
-            {
-                var popular = await _apiClient.GetAdminMetricsAsync(targetUserId.Value, "popular", 10);
-                var byCategories = await _apiClient.GetAdminMetricsAsync(targetUserId.Value, "by-categories", 10);
-                var knn = await _apiClient.GetAdminMetricsAsync(targetUserId.Value, "knn", 10);
-
-                var ndcgBars = new List<ChartBarItem>();
-                if (popular is not null) ndcgBars.Add(new ChartBarItem { Label = "Popular", Value = popular.NdcgAtK, Percent = Math.Clamp(popular.NdcgAtK * 100, 0, 100), Brush = Brushes.SteelBlue });
-                if (byCategories is not null) ndcgBars.Add(new ChartBarItem { Label = "ByCategories", Value = byCategories.NdcgAtK, Percent = Math.Clamp(byCategories.NdcgAtK * 100, 0, 100), Brush = Brushes.DarkOrange });
-                if (knn is not null) ndcgBars.Add(new ChartBarItem { Label = "KNN", Value = knn.NdcgAtK, Percent = Math.Clamp(knn.NdcgAtK * 100, 0, 100), Brush = Brushes.SeaGreen });
-                ReplaceItems(AlgorithmNdcgBars, ndcgBars);
-                AlgorithmComparisonStatus = ndcgBars.Count == 0
-                    ? "Метрики пустые для выбранного пользователя. Сгенерируйте историю и повторите."
-                    : $"Сравнение рассчитано для userId: {targetUserId.Value}";
-            }
-            else
-            {
-                AlgorithmNdcgBars.Clear();
-                AlgorithmComparisonStatus = IsAdmin
-                    ? "Не удалось определить пользователя для сравнения алгоритмов."
-                    : "Сравнение алгоритмов доступно под ролью Admin.";
-            }
-
-            DashboardSummary = $"Графики: категории={InterestCategoryBars.Count}, теги={InterestTagBars.Count}, сравнение NDCG={AlgorithmNdcgBars.Count}";
+            DashboardSummary = $"Графики: категории={InterestCategoryBars.Count}, KNN={KnnDistributionBars.Count}";
             Status = "Графики и аналитика обновлены.";
         });
     }
@@ -815,7 +825,7 @@ public class MainViewModel : ObservableObject
         CheckApiCommand.RaiseCanExecuteChanged();
     }
 
-    private static List<ChartBarItem> BuildBars(List<InterestProfileItem> source)
+    private static List<ChartBarItem> BuildBars(List<InterestProfileItem> source, Brush brush)
     {
         if (source.Count == 0)
         {
@@ -828,9 +838,59 @@ public class MainViewModel : ObservableObject
             {
                 Label = x.Name,
                 Value = x.Score,
-                Percent = Math.Clamp((x.Score / max) * 100, 0, 100)
+                Percent = Math.Clamp((x.Score / max) * 100, 0, 100),
+                Brush = brush
             })
             .ToList();
+    }
+
+    private static List<ChartBarItem> BuildRecommendationBars(List<RecommendationItem> source)
+    {
+        if (source.Count == 0)
+        {
+            return [];
+        }
+
+        var top = source
+            .OrderByDescending(x => x.Score)
+            .Take(8)
+            .ToList();
+
+        var max = Math.Max(0.0001, top.Max(x => x.Score));
+
+        return top.Select(x => new ChartBarItem
+            {
+                Label = x.Title.Length > 28 ? $"{x.Title[..28]}..." : x.Title,
+                Value = x.Score,
+                Percent = Math.Clamp((x.Score / max) * 100, 0, 100),
+                Brush = Brushes.MediumPurple
+            })
+            .ToList();
+    }
+
+    private static PointCollection BuildDistributionPoints(List<ChartBarItem> source)
+    {
+        var points = new PointCollection();
+        if (source.Count == 0)
+        {
+            return points;
+        }
+
+        const double width = 520;
+        const double height = 140;
+        const double left = 40;
+        const double top = 16;
+
+        var step = source.Count == 1 ? width : width / (source.Count - 1);
+
+        for (var i = 0; i < source.Count; i++)
+        {
+            var x = left + (i * step);
+            var y = top + ((100 - source[i].Percent) / 100.0 * height);
+            points.Add(new Point(x, y));
+        }
+
+        return points;
     }
 
 }

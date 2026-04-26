@@ -4,18 +4,20 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Smart Content Recommender (WPF Client)"
+        Title="Smart Content Recommender (Desktop)"
         Height="760"
         Width="1240"
         MinWidth="1080"
         MinHeight="640"
-        Background="#F5F7FA">
+        Background="#EEF2F8">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <Style TargetType="GroupBox">
             <Setter Property="Margin" Value="0,0,0,12" />
             <Setter Property="Padding" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderBrush" Value="#D5DEEA" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
         <Style TargetType="Button">
             <Setter Property="Padding" Value="12,6" />
@@ -28,6 +30,7 @@
             <Setter Property="AlternatingRowBackground" Value="#F8FBFF" />
             <Setter Property="GridLinesVisibility" Value="Horizontal" />
             <Setter Property="HeadersVisibility" Value="Column" />
+            <Setter Property="BorderBrush" Value="#D5DEEA" />
         </Style>
     </Window.Resources>
     <Grid Margin="14">
@@ -129,18 +132,24 @@
                     <Border Grid.Column="1" Background="White" CornerRadius="8" Padding="10" BorderBrush="#DDE3EA" BorderThickness="1">
                         <TabControl>
                             <TabItem Header="Рекомендации">
-                                <DockPanel Margin="8">
-                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Grid Margin="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="2*" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="1.5*" />
+                                        <RowDefinition Height="1.5*" />
+                                    </Grid.RowDefinitions>
+
+                                    <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,8">
                                         <Button Content="Popular" Command="{Binding LoadPopularCommand}" />
                                         <Button Content="By Categories" Command="{Binding LoadByCategoriesCommand}" />
                                         <Button Content="KNN" Command="{Binding LoadKnnCommand}" />
                                         <Button Content="Объяснить KNN" Command="{Binding LoadExplainCommand}" />
                                         <Button Content="Профиль интересов" Command="{Binding LoadInterestProfileCommand}" />
-                                        <Button Content="Сгенерировать демо-историю (Dev)"
-                                                Visibility="{Binding ShowDemoHistoryButton, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                Command="{Binding GenerateDemoHistoryCommand}" />
                                     </StackPanel>
-                                    <DataGrid ItemsSource="{Binding RecommendationItems}" AutoGenerateColumns="False" IsReadOnly="True">
+
+                                    <DataGrid Grid.Row="1" ItemsSource="{Binding RecommendationItems}" AutoGenerateColumns="False" IsReadOnly="True">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
                                             <DataGridTextColumn Header="Причина" Binding="{Binding Reason}" Width="2*" />
@@ -148,8 +157,8 @@
                                         </DataGrid.Columns>
                                     </DataGrid>
 
-                                    <TextBlock Margin="0,10,0,6" FontWeight="SemiBold" Text="Explainability (KNN factors)" />
-                                    <DataGrid ItemsSource="{Binding ExplainItems}" AutoGenerateColumns="False" IsReadOnly="True" Height="160">
+                                    <TextBlock Grid.Row="2" Margin="0,10,0,6" FontWeight="SemiBold" Text="Explainability (KNN factors)" />
+                                    <DataGrid Grid.Row="3" ItemsSource="{Binding ExplainItems}" AutoGenerateColumns="False" IsReadOnly="True">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
                                             <DataGridTextColumn Header="Popular" Binding="{Binding PopularityFactor}" Width="*" />
@@ -158,13 +167,14 @@
                                             <DataGridTextColumn Header="Final" Binding="{Binding FinalScore}" Width="*" />
                                         </DataGrid.Columns>
                                     </DataGrid>
-                                    <Grid Margin="0,8,0,0">
+
+                                    <Grid Grid.Row="4" Margin="0,8,0,0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
                                         <GroupBox Header="Топ категорий" Grid.Column="0" Margin="0,0,6,0">
-                                            <DataGrid ItemsSource="{Binding InterestCategories}" AutoGenerateColumns="False" IsReadOnly="True" Height="120">
+                                            <DataGrid ItemsSource="{Binding InterestCategories}" AutoGenerateColumns="False" IsReadOnly="True">
                                                 <DataGrid.Columns>
                                                     <DataGridTextColumn Header="Категория" Binding="{Binding Name}" Width="2*" />
                                                     <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="*" />
@@ -172,7 +182,7 @@
                                             </DataGrid>
                                         </GroupBox>
                                         <GroupBox Header="Топ тегов" Grid.Column="1" Margin="6,0,0,0">
-                                            <DataGrid ItemsSource="{Binding InterestTags}" AutoGenerateColumns="False" IsReadOnly="True" Height="120">
+                                            <DataGrid ItemsSource="{Binding InterestTags}" AutoGenerateColumns="False" IsReadOnly="True">
                                                 <DataGrid.Columns>
                                                     <DataGridTextColumn Header="Тег" Binding="{Binding Name}" Width="2*" />
                                                     <DataGridTextColumn Header="Score" Binding="{Binding Score}" Width="*" />
@@ -180,7 +190,7 @@
                                             </DataGrid>
                                         </GroupBox>
                                     </Grid>
-                                </DockPanel>
+                                </Grid>
                             </TabItem>
 
                             <TabItem Header="Графики и аналитика" Visibility="{Binding IsAuthorized, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -194,66 +204,35 @@
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="*" />
                                             <RowDefinition Height="*" />
-                                            <RowDefinition Height="*" />
                                         </Grid.RowDefinitions>
 
-                                        <GroupBox Header="Топ категорий (график)" Grid.Row="0">
-                                            <ItemsControl ItemsSource="{Binding InterestCategoryBars}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid Margin="0,0,0,6">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="2*" />
-                                                                <ColumnDefinition Width="4*" />
-                                                                <ColumnDefinition Width="*" />
-                                                            </Grid.ColumnDefinitions>
-                                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Label}" />
-                                                            <ProgressBar Grid.Column="1" Height="16" Maximum="100" Value="{Binding Percent}" />
-                                                            <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="{Binding Value, StringFormat=F2}" />
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </GroupBox>
-
-                                        <GroupBox Header="Топ тегов (график)" Grid.Row="1">
-                                            <ItemsControl ItemsSource="{Binding InterestTagBars}">
-                                                <ItemsControl.ItemTemplate>
-                                                    <DataTemplate>
-                                                        <Grid Margin="0,0,0,6">
-                                                            <Grid.ColumnDefinitions>
-                                                                <ColumnDefinition Width="2*" />
-                                                                <ColumnDefinition Width="4*" />
-                                                                <ColumnDefinition Width="*" />
-                                                            </Grid.ColumnDefinitions>
-                                                            <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Label}" />
-                                                            <ProgressBar Grid.Column="1" Height="16" Maximum="100" Value="{Binding Percent}" />
-                                                            <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="{Binding Value, StringFormat=F2}" />
-                                                        </Grid>
-                                                    </DataTemplate>
-                                                </ItemsControl.ItemTemplate>
-                                            </ItemsControl>
-                                        </GroupBox>
-
-                                        <GroupBox Header="Сравнение алгоритмов по NDCG (Admin)" Grid.Row="2">
+                                        <GroupBox Header="Распределение топ категорий" Grid.Row="0">
                                             <StackPanel>
-                                                <TextBlock Margin="0,0,0,6" Foreground="Gray" Text="{Binding AlgorithmComparisonStatus}" />
-                                                <ItemsControl ItemsSource="{Binding AlgorithmNdcgBars}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate>
-                                                            <Grid Margin="0,0,0,6">
-                                                                <Grid.ColumnDefinitions>
-                                                                    <ColumnDefinition Width="2*" />
-                                                                    <ColumnDefinition Width="4*" />
-                                                                    <ColumnDefinition Width="*" />
-                                                                </Grid.ColumnDefinitions>
-                                                                <TextBlock Grid.Column="0" VerticalAlignment="Center" Text="{Binding Label}" />
-                                                                <ProgressBar Grid.Column="1" Height="16" Maximum="100" Value="{Binding Percent}" Foreground="{Binding Brush}" />
-                                                                <TextBlock Grid.Column="2" HorizontalAlignment="Right" Text="{Binding Value, StringFormat=F3}" />
-                                                            </Grid>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
+                                                <TextBlock Margin="0,0,0,6" Foreground="Gray" Text="{Binding CategoryDistributionStatus}" />
+                                                <Border BorderBrush="#D5DEEA" BorderThickness="1" CornerRadius="6" Background="#FBFCFF" Padding="8">
+                                                    <Canvas Height="180">
+                                                        <Line X1="40" Y1="16" X2="40" Y2="156" Stroke="#7A8798" StrokeThickness="1.2" />
+                                                        <Line X1="40" Y1="156" X2="560" Y2="156" Stroke="#7A8798" StrokeThickness="1.2" />
+                                                        <TextBlock Canvas.Left="8" Canvas.Top="8" FontSize="11" Foreground="#5f6b7a" Text="Y: score" />
+                                                        <TextBlock Canvas.Left="520" Canvas.Top="160" FontSize="11" Foreground="#5f6b7a" Text="X: rank" />
+                                                        <Polyline Points="{Binding InterestCategoryPoints}" Stroke="#2A8DFF" StrokeThickness="2.6" />
+                                                    </Canvas>
+                                                </Border>
+                                            </StackPanel>
+                                        </GroupBox>
+
+                                        <GroupBox Header="Распределение KNN (top score)" Grid.Row="1">
+                                            <StackPanel>
+                                                <TextBlock Margin="0,0,0,6" Foreground="Gray" Text="{Binding KnnDistributionStatus}" />
+                                                <Border BorderBrush="#D5DEEA" BorderThickness="1" CornerRadius="6" Background="#FBFCFF" Padding="8">
+                                                    <Canvas Height="180">
+                                                        <Line X1="40" Y1="16" X2="40" Y2="156" Stroke="#7A8798" StrokeThickness="1.2" />
+                                                        <Line X1="40" Y1="156" X2="560" Y2="156" Stroke="#7A8798" StrokeThickness="1.2" />
+                                                        <TextBlock Canvas.Left="8" Canvas.Top="8" FontSize="11" Foreground="#5f6b7a" Text="Y: score" />
+                                                        <TextBlock Canvas.Left="520" Canvas.Top="160" FontSize="11" Foreground="#5f6b7a" Text="X: rank" />
+                                                        <Polyline Points="{Binding KnnDistributionPoints}" Stroke="#7C4DFF" StrokeThickness="2.6" />
+                                                    </Canvas>
+                                                </Border>
                                             </StackPanel>
                                         </GroupBox>
                                     </Grid>
@@ -262,7 +241,7 @@
 
                             <TabItem Header="Админ: Пользователи" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <DockPanel Margin="8">
-                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                                         <Button Content="Обновить" Command="{Binding LoadAdminUsersCommand}" />
                                         <Button Content="Сделать Admin" Command="{Binding MakeAdminCommand}" />
                                         <Button Content="Сделать User" Command="{Binding MakeUserCommand}" />
@@ -272,7 +251,7 @@
                                         <Button Content="Метрики KNN" Command="{Binding LoadMetricsCommand}" />
                                         <Button Content="Экспорт CSV" Command="{Binding ExportCsvCommand}" />
                                         <Button Content="Экспорт PDF" Command="{Binding ExportPdfCommand}" />
-                                    </StackPanel>
+                                    </WrapPanel>
 
                                     <DataGrid ItemsSource="{Binding AdminUsers}" SelectedItem="{Binding SelectedAdminUser}" AutoGenerateColumns="False" IsReadOnly="True">
                                         <DataGrid.Columns>
@@ -286,31 +265,38 @@
                             </TabItem>
 
                             <TabItem Header="Админ: Контент (CRUD)" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
-                                <DockPanel Margin="8">
-                                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,8">
+                                <Grid Margin="8">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+
+                                    <WrapPanel Margin="0,0,0,8">
                                         <Button Content="Справочники" Command="{Binding LoadAdminDictionariesCommand}" />
                                         <Button Content="Создать" Command="{Binding CreateContentCommand}" />
                                         <Button Content="Обновить" Command="{Binding UpdateContentCommand}" />
                                         <Button Content="Удалить" Command="{Binding DeleteContentCommand}" />
-                                    </StackPanel>
+                                    </WrapPanel>
 
-                                    <Grid Margin="0,0,0,8">
+                                    <Grid Margin="0,0,0,8" Grid.Row="1">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="*" />
                                         </Grid.ColumnDefinitions>
 
                                         <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                                            <TextBlock Text="Title" />
+                                            <TextBlock Text="Название" />
                                             <TextBox Height="30" Text="{Binding ContentTitle, UpdateSourceTrigger=PropertyChanged}" />
-                                            <TextBlock Margin="0,8,0,0" Text="Url" />
+                                            <TextBlock Margin="0,8,0,0" Text="Ссылка (URL)" />
                                             <TextBox Height="30" Text="{Binding ContentUrl, UpdateSourceTrigger=PropertyChanged}" />
-                                            <TextBlock Margin="0,8,0,0" Text="Description" />
+                                            <TextBlock Margin="0,8,0,0" Text="Описание" />
                                             <TextBox Height="60" TextWrapping="Wrap" Text="{Binding ContentDescription, UpdateSourceTrigger=PropertyChanged}" />
                                         </StackPanel>
 
                                         <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                                            <TextBlock Text="Category" />
+                                            <TextBlock Text="Категория" />
                                             <ComboBox Height="30"
                                                       ItemsSource="{Binding Categories}"
                                                       SelectedItem="{Binding SelectedCategory}"
@@ -322,15 +308,16 @@
                                         </StackPanel>
                                     </Grid>
 
-                                    <TextBlock Margin="0,0,0,6" FontWeight="SemiBold" Text="Текущий контент (выбери строку для Update/Delete)" />
-                                    <DataGrid ItemsSource="{Binding ContentItems}" SelectedItem="{Binding SelectedContent}" AutoGenerateColumns="False" IsReadOnly="True">
+                                    <TextBlock Grid.Row="2" Margin="0,0,0,6" FontWeight="SemiBold" Text="Текущий контент (выбери строку для Update/Delete)" />
+                                    <DataGrid Grid.Row="3" ItemsSource="{Binding ContentItems}" SelectedItem="{Binding SelectedContent}" AutoGenerateColumns="False" IsReadOnly="True"
+                                              HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                                         <DataGrid.Columns>
                                             <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="2*" />
                                             <DataGridTextColumn Header="Категория" Binding="{Binding CategoryName}" Width="*" />
                                             <DataGridTextColumn Header="URL" Binding="{Binding Url}" Width="2*" />
                                         </DataGrid.Columns>
                                     </DataGrid>
-                                </DockPanel>
+                                </Grid>
                             </TabItem>
 
                             <TabItem Header="Админ: DB Viewer" Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVisibilityConverter}}">
@@ -368,6 +355,32 @@
                                         </TabItem>
                                     </TabControl>
                                 </DockPanel>
+                            </TabItem>
+
+                            <TabItem Header="Справка">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <StackPanel Margin="10">
+                                        <Border Background="#F8FAFD" BorderBrush="#DDE3EA" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock FontSize="16" FontWeight="SemiBold" Text="Как пользоваться desktop-клиентом" />
+                                                <TextBlock Margin="0,6,0,0" TextWrapping="Wrap"
+                                                           Text="1) Войдите в систему. 2) Вкладка 'Контент' — выполните действия Просмотр/Лайк/Клик. 3) Вкладка 'Рекомендации' — сравните Popular / By Categories / KNN. 4) Вкладка 'Графики и аналитика' — посмотрите профиль интересов и график распределения KNN." />
+                                            </StackPanel>
+                                        </Border>
+                                        <Expander Header="Что означают результаты алгоритмов" IsExpanded="True" Margin="0,0,0,8">
+                                            <TextBlock Margin="8" TextWrapping="Wrap"
+                                                       Text="Popular — общий тренд. By Categories — предпочтения пользователя по категориям. KNN — персональная выдача по похожим пользователям. Explainability показывает вклад факторов в финальный score." />
+                                        </Expander>
+                                        <Expander Header="Почему график KNN может быть пустым" Margin="0,0,0,8">
+                                            <TextBlock Margin="8" TextWrapping="Wrap"
+                                                       Text="Если у пользователя нет действий, KNN не может построить устойчивую персонализацию. Добавьте 5-10 действий в разных категориях и обновите графики." />
+                                        </Expander>
+                                        <Expander Header="Что показывать аудитории (быстрый сценарий)">
+                                            <TextBlock Margin="8" TextWrapping="Wrap"
+                                                       Text="Сначала покажите контент и действия, затем разные рекомендации, потом Explainability и профиль интересов, и завершите вкладкой 'Графики и аналитика' с распределением KNN." />
+                                        </Expander>
+                                    </StackPanel>
+                                </ScrollViewer>
                             </TabItem>
                         </TabControl>
                     </Border>
